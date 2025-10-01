@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/constant/app_images.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
-import 'package:minilauncher/features/presentation/bloc/splash_bloc/splash_bloc.dart';
-import 'package:minilauncher/features/presentation/widget/splash_widget/splash_state_handle.dart';
+import 'package:minilauncher/featuresss/presentation/bloc/splash_bloc/splash_bloc.dart';
+import 'package:minilauncher/featuresss/presentation/widget/splash_widget/splash_state_handle.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

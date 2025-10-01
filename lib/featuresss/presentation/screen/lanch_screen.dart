@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/common/custom_appbar.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
-import 'package:minilauncher/features/presentation/bloc/apps_management/apps_management_bloc.dart';
+import 'package:minilauncher/featuresss/presentation/bloc/apps_management/apps_management_bloc.dart';
 
 class LauncherHome extends StatelessWidget {
   const LauncherHome({super.key});

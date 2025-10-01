@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.minilaunch.launcherminilauncher"
+    namespace = "com.boeko.minilauncher"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
@@ -21,10 +23,10 @@ android {
 
     defaultConfig {
         // Unique Application ID
-        applicationId = "com.minilaunch.launcherminilauncher"
+        applicationId = "com.boeko.minilauncher"
 
         // SDK versions
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
 
         // Versioning

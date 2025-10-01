@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
-import 'package:minilauncher/features/presentation/screen/dashbord_screen.dart';
-import 'package:minilauncher/features/presentation/screen/lanch_screen.dart';
-import 'package:minilauncher/features/presentation/screen/splash_screen.dart';
+import 'package:minilauncher/featuresss/presentation/screen/dashbord_screen.dart';
+import 'package:minilauncher/featuresss/presentation/screen/lanch_screen.dart';
+import 'package:minilauncher/featuresss/presentation/screen/splash_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
