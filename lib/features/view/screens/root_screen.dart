@@ -1,6 +1,9 @@
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:minilauncher/core/constant/constant.dart';
+import 'package:minilauncher/core/themes/app_colors.dart';
+import 'package:minilauncher/features/view/screens/apps_screen/show_prioritized_apps.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
 import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
 
@@ -9,13 +12,21 @@ class RootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: WallpaperBackground(
-          child: bodyPartOfRootScreen(context),
-        ),
+    return PopScope(
+      canPop: false, 
+      child: SafeArea(
+        child: Scaffold(
+            appBar:  AppBar(
+            forceMaterialTransparency: true,
+            elevation: 0,
+            title: Text('App Manager', style: TextStyle(color: AppPalette.whiteColor, fontSize: 14, fontWeight: FontWeight.bold)),
+            centerTitle: true,
+            
+          ),
+            body: WallpaperBackground(
+              child: bodyPartOfRootScreen(context),
+            ),
+          ),
       ),
     );
   }
@@ -40,12 +51,15 @@ class RootScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.only(top: 50, left: 20, bottom: 20),
-          child: Text('Select Priority Apps',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w300,
+          padding: EdgeInsets.only(top: 10, left: 20, bottom: 20),
+          child: Align(
+            alignment: Alignment.center,
+            child: Text('Select Priority Apps',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ),
@@ -69,16 +83,16 @@ class RootScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                       ),
-                    const SizedBox(width: 20,),
+                    ConstantWidgets.width20(context),
                     Flexible(
                       child: Text(state.allApps[index].app.appName,
-                        style: const TextStyle(color: Colors.white),overflow: TextOverflow.clip,),
+                        overflow: TextOverflow.clip,),
                     ),
                   ],
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
-                activeColor: Colors.blue,
-                checkColor: Colors.white,
+                activeColor: AppPalette.blackColor,
+                checkColor: AppPalette.whiteColor,
               );
             },
           ),
@@ -88,15 +102,14 @@ class RootScreen extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: state.selectedPackages.isEmpty ? Colors.grey.withValues(alpha: 0.5) : Colors.blue,
+              backgroundColor: state.selectedPackages.isEmpty ? AppPalette.blackColor.withValues(alpha: 0.5) :AppPalette.greyColor.withValues(alpha: 0.5) ,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(5),
               ),
               minimumSize: Size(MediaQuery.of(context).size.width, 50)
             ),
               onPressed: () {
-                // Save prioritized apps and load them
                 if (state.selectedPackages.isEmpty) return;
                 context.read<RootBloc>().add(
                   SavePriorityAppsEvent(
@@ -107,7 +120,7 @@ class RootScreen extends StatelessWidget {
               child: Text(
                 state.selectedPackages.isEmpty ? 'Select Atleast one' : 'Save',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppPalette.whiteColor,
                 ),
               )
           ),

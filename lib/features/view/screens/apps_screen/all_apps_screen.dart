@@ -10,7 +10,6 @@ import 'package:minilauncher/features/model/models/app_model.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
 import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
 
-
 class AllAppsView extends StatefulWidget {
   final InitialAllAppsLoadedState state;
 
@@ -49,7 +48,6 @@ class _AllAppsViewState extends State<AllAppsView> {
       _sectionKeys[letter] = GlobalKey();
     }
   }
-
 
   void _groupAppsAlphabetically() {
     _groupedApps.clear();
@@ -118,10 +116,13 @@ class _AllAppsViewState extends State<AllAppsView> {
         _filteredApps = widget.state.allApps;
         _showingAlphabetIndex = true;
       } else {
-        _filteredApps = widget.state.allApps
-            .where((appInfo) =>
-            appInfo.app.appName.toLowerCase().contains(query))
-            .toList();
+        _filteredApps =
+            widget.state.allApps
+                .where(
+                  (appInfo) =>
+                      appInfo.app.appName.toLowerCase().contains(query),
+                )
+                .toList();
         _showingAlphabetIndex = false;
       }
       _groupAppsAlphabetically();
@@ -144,8 +145,18 @@ class _AllAppsViewState extends State<AllAppsView> {
 
   String _getMonth(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[month - 1];
   }
@@ -160,11 +171,17 @@ class _AllAppsViewState extends State<AllAppsView> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Time + Date
                   Padding(
-                    padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+                    padding: const EdgeInsets.only(
+                      top: 10,
+                      left: 20,
+                      right: 20,
+                    ),
                     child: StreamBuilder<DateTime>(
-                      stream: Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
+                      stream: Stream.periodic(
+                        const Duration(seconds: 1),
+                        (_) => DateTime.now(),
+                      ),
                       initialData: DateTime.now(),
                       builder: (context, snapshot) {
                         final now = snapshot.data!;
@@ -192,7 +209,7 @@ class _AllAppsViewState extends State<AllAppsView> {
                       },
                     ),
                   ),
-      
+
                   /// Search Bar
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -204,7 +221,10 @@ class _AllAppsViewState extends State<AllAppsView> {
                         hintStyle: const TextStyle(color: Colors.white54),
                         filled: true,
                         fillColor: Colors.white10,
-                        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.white70,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -212,23 +232,21 @@ class _AllAppsViewState extends State<AllAppsView> {
                       ),
                     ),
                   ),
-      
-                  /// Apps List
+
                   Expanded(
-                    child: _showingAlphabetIndex
-                        ? _buildGroupedAppsList()
-                        : _buildFilteredAppsList(),
+                    child:
+                        _showingAlphabetIndex
+                            ? _buildGroupedAppsList()
+                            : _buildFilteredAppsList(),
                   ),
                 ],
               ),
-      
+
               // Alphabetical Index Sidebar
-              if (_showingAlphabetIndex)
-                _buildAlphabetIndex(),
-      
+              if (_showingAlphabetIndex) _buildAlphabetIndex(),
+
               // Current letter indicator during drag
-              if (_currentDragLetter != null)
-                _buildCurrentLetterIndicator(),
+              if (_currentDragLetter != null) _buildCurrentLetterIndicator(),
             ],
           ),
         ),
@@ -255,7 +273,7 @@ class _AllAppsViewState extends State<AllAppsView> {
               child: Text(
                 letter,
                 style: TextStyle(
-                  color: AppPalette.orengeColor.withValues(alpha: .7),
+                  color: AppPalette.whiteColor.withValues(alpha: .7),
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 1,
@@ -267,20 +285,16 @@ class _AllAppsViewState extends State<AllAppsView> {
               final app = appModel.app;
               return ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                title: Row(
-                  children: [
-                    if (app is ApplicationWithIcon)
-                      Image.memory(
-                        app.icon,
-                        width: 40,
-                        height: 40,
-                      ),
-                    ConstantWidgets.hight20(context),
-                    Text(
-                      app.appName,
-                      style: const TextStyle(color: Colors.white60),
-                    ),
-                  ],
+                leading:
+                    (app is ApplicationWithIcon)
+                        ? Image.memory(app.icon, width: 40, height: 40)
+                        : SizedBox(width: 40, height: 40),
+                title: Text(
+                  app.appName,
+                  style: const TextStyle(color: Colors.white60),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
                 ),
                 onTap: () {
                   context.read<RootBloc>().add(
@@ -289,7 +303,7 @@ class _AllAppsViewState extends State<AllAppsView> {
                 },
               );
             }),
-         ConstantWidgets.hight20(context)
+            ConstantWidgets.hight20(context),
           ],
         );
       },
@@ -305,16 +319,9 @@ class _AllAppsViewState extends State<AllAppsView> {
           title: Row(
             children: [
               if (app is ApplicationWithIcon)
-                Image.memory(
-                  app.icon,
-                  width: 40,
-                  height: 40,
-                ),
+                Image.memory(app.icon, width: 40, height: 40),
               ConstantWidgets.width20(context),
-              Text(
-                app.appName,
-                style: const TextStyle(color: Colors.white60),
-              ),
+              Text(app.appName, style: const TextStyle(color: Colors.white60)),
             ],
           ),
           onTap: () {
@@ -381,18 +388,23 @@ class _AllAppsViewState extends State<AllAppsView> {
     final containerHeight = MediaQuery.of(context).size.height * 0.65;
 
     // Get all available letters in correct order (including #)
-    final allLetters = ['#', ...List.generate(26, (i) => String.fromCharCode(65 + i))];
+    final allLetters = [
+      '#',
+      ...List.generate(26, (i) => String.fromCharCode(65 + i)),
+    ];
 
     // Find which letter was touched
     final itemHeight = containerHeight / allLetters.length;
-    final tappedIndex = (position.dy / itemHeight).floor().clamp(0, allLetters.length - 1);
+    final tappedIndex = (position.dy / itemHeight).floor().clamp(
+      0,
+      allLetters.length - 1,
+    );
     final tappedLetter = allLetters[tappedIndex];
 
     // Only proceed if this letter has apps
     if (_availableLetters.contains(tappedLetter) &&
         _groupedApps[tappedLetter] != null &&
         _groupedApps[tappedLetter]!.isNotEmpty) {
-
       // Update UI state
       setState(() {
         _currentDragLetter = tappedLetter;
@@ -423,7 +435,10 @@ class _AllAppsViewState extends State<AllAppsView> {
 
   // **Build Alphabet Items Dynamically**
   List<Widget> _buildAlphabetItems() {
-    final allLetters = ['#', ...List.generate(26, (i) => String.fromCharCode(65 + i))];
+    final allLetters = [
+      '#',
+      ...List.generate(26, (i) => String.fromCharCode(65 + i)),
+    ];
 
     return allLetters.map((letter) {
       final isAvailable = _availableLetters.contains(letter);
@@ -435,16 +450,22 @@ class _AllAppsViewState extends State<AllAppsView> {
           vertical: isActive ? 4 : 2,
           horizontal: isActive ? 6 : 2,
         ),
-        decoration: isActive ? BoxDecoration(
-          color:AppPalette.orengeColor.withValues(alpha: .6),
-          borderRadius: BorderRadius.circular(8),
-        ) : null,
+        decoration:
+            isActive
+                ? BoxDecoration(
+                  color: AppPalette.orengeColor.withValues(alpha: .6),
+                  borderRadius: BorderRadius.circular(8),
+                )
+                : null,
         child: Text(
           letter,
           style: TextStyle(
-            color: isAvailable
-                ? (isActive ? AppPalette.whiteColor : AppPalette.whiteColor.withValues(alpha: 0.7))
-                : AppPalette.whiteColor.withValues(alpha: .15),
+            color:
+                isAvailable
+                    ? (isActive
+                        ? AppPalette.whiteColor
+                        : AppPalette.whiteColor.withValues(alpha: 0.7))
+                    : AppPalette.whiteColor.withValues(alpha: .15),
             fontSize: isActive ? 14 : 10,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w300,
           ),
@@ -456,13 +477,14 @@ class _AllAppsViewState extends State<AllAppsView> {
   Widget _buildCurrentLetterIndicator() {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 200),
-      left: _isDraggingAlphabet ? 50 : MediaQuery.of(context).size.width / 2 - 40,
+      left:
+          _isDraggingAlphabet ? 50 : MediaQuery.of(context).size.width / 2 - 40,
       top: MediaQuery.of(context).size.height / 2 - 40,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.all(_isDraggingAlphabet ? 16 : 20),
         decoration: BoxDecoration(
-          color: AppPalette.orengeColor.withValues(alpha:  0.95),
+          color: AppPalette.orengeColor.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(_isDraggingAlphabet ? 10 : 12),
           boxShadow: [
             BoxShadow(
@@ -484,7 +506,7 @@ class _AllAppsViewState extends State<AllAppsView> {
               ),
             ),
             if (_isDraggingAlphabet) ...[
-              const SizedBox(width: 8),
+              ConstantWidgets.width20(context),
               Text(
                 '${_groupedApps[_currentDragLetter!]?.length ?? 0}',
                 style: TextStyle(
@@ -499,7 +521,6 @@ class _AllAppsViewState extends State<AllAppsView> {
       ),
     );
   }
-
 
   void _jumpToLetter(String letter) {
     final sectionKey = _sectionKeys[letter];
@@ -522,7 +543,6 @@ class _AllAppsViewState extends State<AllAppsView> {
     // Method 2: Backup using ListView index
     final letterIndex = _availableLetters.indexOf(letter);
     if (letterIndex != -1 && _scrollController.hasClients) {
-
       // Calculate approximate position
       double targetPosition = 0;
       for (int i = 0; i < letterIndex; i++) {

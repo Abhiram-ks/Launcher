@@ -12,7 +12,7 @@ class WallpaperBackground extends StatelessWidget {
     return BlocBuilder<RootBloc, RootState>(
       buildWhen: (previous, current) => current is WallpaperLoadedState,
       builder: (context, state) {
-        String wallpaperPath = 'assets/wallpapper/1.png';
+        String wallpaperPath = 'assets/wallpapers/1.jpg';
         
         if (state is WallpaperLoadedState) {
           wallpaperPath = state.currentWallpaper;
