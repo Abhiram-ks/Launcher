@@ -8,7 +8,7 @@ import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/model/models/app_model.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
-import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
+import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
 class AllAppsView extends StatefulWidget {
   final InitialAllAppsLoadedState state;
@@ -24,13 +24,13 @@ class _AllAppsViewState extends State<AllAppsView> {
   final ScrollController _scrollController = ScrollController();
 
   List<AppsModel> _filteredApps = [];
-  Map<String, List<AppsModel>> _groupedApps = {};
-  List<String> _availableLetters = [];
-  Map<String, double> _letterPositions = {};
+  Map<String, List<AppsModel>> groupedApps = {};
+  List<String> availableLetters = [];
+  Map<String, double> letterPositions = {};
 
   bool _showingAlphabetIndex = true;
   String? _currentDragLetter;
-  bool _isDraggingAlphabet = false;
+  bool isDraggingAlphabet = false;
   Timer? _dragEndTimer;
   final Map<String, GlobalKey> _sectionKeys = {};
 
@@ -44,14 +44,14 @@ class _AllAppsViewState extends State<AllAppsView> {
 
   void _createSectionKeys() {
     _sectionKeys.clear();
-    for (String letter in _availableLetters) {
+    for (String letter in availableLetters) {
       _sectionKeys[letter] = GlobalKey();
     }
   }
 
   void _groupAppsAlphabetically() {
-    _groupedApps.clear();
-    _availableLetters.clear();
+    groupedApps.clear();
+    availableLetters.clear();
 
     // Group apps by first letter with proper validation
     for (var appModel in _filteredApps) {
@@ -63,29 +63,29 @@ class _AllAppsViewState extends State<AllAppsView> {
       // Only include letters A-Z, skip numbers and special characters
       if (firstChar.codeUnitAt(0) < 65 || firstChar.codeUnitAt(0) > 90) {
         const specialKey = '#';
-        if (!_groupedApps.containsKey(specialKey)) {
-          _groupedApps[specialKey] = [];
-          _availableLetters.add(specialKey);
+        if (!groupedApps.containsKey(specialKey)) {
+          groupedApps[specialKey] = [];
+          availableLetters.add(specialKey);
         }
-        _groupedApps[specialKey]!.add(appModel);
+        groupedApps[specialKey]!.add(appModel);
       } else {
-        if (!_groupedApps.containsKey(firstChar)) {
-          _groupedApps[firstChar] = [];
-          _availableLetters.add(firstChar);
+        if (!groupedApps.containsKey(firstChar)) {
+          groupedApps[firstChar] = [];
+          availableLetters.add(firstChar);
         }
-        _groupedApps[firstChar]!.add(appModel);
+        groupedApps[firstChar]!.add(appModel);
       }
     }
 
     // Sort letters (# will come first, then A-Z)
-    _availableLetters.sort((a, b) {
+    availableLetters.sort((a, b) {
       if (a == '#') return -1;
       if (b == '#') return 1;
       return a.compareTo(b);
     });
 
     // Sort apps within each group
-    _groupedApps.forEach((key, value) {
+    groupedApps.forEach((key, value) {
       value.sort((a, b) => a.app.appName.compareTo(b.app.appName));
     });
 
@@ -94,14 +94,14 @@ class _AllAppsViewState extends State<AllAppsView> {
   }
 
   void _calculateLetterPositions() {
-    _letterPositions.clear();
+    letterPositions.clear();
     double currentPosition = 0;
 
-    for (String letter in _availableLetters) {
-      _letterPositions[letter] = currentPosition;
+    for (String letter in availableLetters) {
+      letterPositions[letter] = currentPosition;
 
       // Validate that the group actually exists and has apps
-      final appsInGroup = _groupedApps[letter];
+      final appsInGroup = groupedApps[letter];
       if (appsInGroup != null && appsInGroup.isNotEmpty) {
         // Header height (40) + apps count * item height (72) + spacing
         currentPosition += 40 + (appsInGroup.length * 72) + 8;
@@ -165,6 +165,7 @@ class _AllAppsViewState extends State<AllAppsView> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         body: WallpaperBackground(
           child: Stack(
             children: [
@@ -244,9 +245,6 @@ class _AllAppsViewState extends State<AllAppsView> {
 
               // Alphabetical Index Sidebar
               if (_showingAlphabetIndex) _buildAlphabetIndex(),
-
-              // Current letter indicator during drag
-              if (_currentDragLetter != null) _buildCurrentLetterIndicator(),
             ],
           ),
         ),
@@ -258,10 +256,10 @@ class _AllAppsViewState extends State<AllAppsView> {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.only(right: 30),
-      itemCount: _availableLetters.length,
+      itemCount: availableLetters.length,
       itemBuilder: (context, index) {
-        final letter = _availableLetters[index];
-        final apps = _groupedApps[letter]!;
+        final letter = availableLetters[index];
+        final apps = groupedApps[letter]!;
 
         return Column(
           key: _sectionKeys[letter],
@@ -349,7 +347,7 @@ class _AllAppsViewState extends State<AllAppsView> {
       child: GestureDetector(
         onPanStart: (details) {
           setState(() {
-            _isDraggingAlphabet = true;
+            isDraggingAlphabet = true;
           });
           _handleAlphabetInteraction(details.localPosition, isDrag: true);
           HapticFeedback.selectionClick();
@@ -363,7 +361,7 @@ class _AllAppsViewState extends State<AllAppsView> {
             if (mounted) {
               setState(() {
                 _currentDragLetter = null;
-                _isDraggingAlphabet = false;
+                isDraggingAlphabet = false;
               });
             }
           });
@@ -402,14 +400,14 @@ class _AllAppsViewState extends State<AllAppsView> {
     final tappedLetter = allLetters[tappedIndex];
 
     // Only proceed if this letter has apps
-    if (_availableLetters.contains(tappedLetter) &&
-        _groupedApps[tappedLetter] != null &&
-        _groupedApps[tappedLetter]!.isNotEmpty) {
+    if (availableLetters.contains(tappedLetter) &&
+        groupedApps[tappedLetter] != null &&
+        groupedApps[tappedLetter]!.isNotEmpty) {
       // Update UI state
       setState(() {
         _currentDragLetter = tappedLetter;
         if (!isDrag) {
-          _isDraggingAlphabet = true;
+          isDraggingAlphabet = true;
         }
       });
 
@@ -425,7 +423,7 @@ class _AllAppsViewState extends State<AllAppsView> {
           if (mounted) {
             setState(() {
               _currentDragLetter = null;
-              _isDraggingAlphabet = false;
+              isDraggingAlphabet = false;
             });
           }
         });
@@ -441,7 +439,7 @@ class _AllAppsViewState extends State<AllAppsView> {
     ];
 
     return allLetters.map((letter) {
-      final isAvailable = _availableLetters.contains(letter);
+      final isAvailable = availableLetters.contains(letter);
       final isActive = _currentDragLetter == letter;
 
       return AnimatedContainer(
@@ -450,8 +448,7 @@ class _AllAppsViewState extends State<AllAppsView> {
           vertical: isActive ? 4 : 2,
           horizontal: isActive ? 6 : 2,
         ),
-        decoration:
-            isActive
+        decoration:  isActive
                 ? BoxDecoration(
                   color: AppPalette.orengeColor.withValues(alpha: .6),
                   borderRadius: BorderRadius.circular(8),
@@ -474,53 +471,6 @@ class _AllAppsViewState extends State<AllAppsView> {
     }).toList();
   }
 
-  Widget _buildCurrentLetterIndicator() {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 200),
-      left:
-          _isDraggingAlphabet ? 50 : MediaQuery.of(context).size.width / 2 - 40,
-      top: MediaQuery.of(context).size.height / 2 - 40,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(_isDraggingAlphabet ? 16 : 20),
-        decoration: BoxDecoration(
-          color: AppPalette.orengeColor.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(_isDraggingAlphabet ? 10 : 12),
-          boxShadow: [
-            BoxShadow(
-              color: AppPalette.orengeColor.withValues(alpha: .4),
-              blurRadius: _isDraggingAlphabet ? 15 : 20,
-              spreadRadius: _isDraggingAlphabet ? 3 : 5,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _currentDragLetter!,
-              style: TextStyle(
-                color: AppPalette.whiteColor,
-                fontSize: _isDraggingAlphabet ? 32 : 40,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            if (_isDraggingAlphabet) ...[
-              ConstantWidgets.width20(context),
-              Text(
-                '${_groupedApps[_currentDragLetter!]?.length ?? 0}',
-                style: TextStyle(
-                  color: AppPalette.whiteColor.withValues(alpha: .7),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   void _jumpToLetter(String letter) {
     final sectionKey = _sectionKeys[letter];
@@ -541,13 +491,13 @@ class _AllAppsViewState extends State<AllAppsView> {
     }
 
     // Method 2: Backup using ListView index
-    final letterIndex = _availableLetters.indexOf(letter);
+    final letterIndex = availableLetters.indexOf(letter);
     if (letterIndex != -1 && _scrollController.hasClients) {
       // Calculate approximate position
       double targetPosition = 0;
       for (int i = 0; i < letterIndex; i++) {
-        final prevLetter = _availableLetters[i];
-        final appsCount = _groupedApps[prevLetter]?.length ?? 0;
+        final prevLetter = availableLetters[i];
+        final appsCount = groupedApps[prevLetter]?.length ?? 0;
         targetPosition += 48 + (appsCount * 72) + 16; // Header + apps + spacing
       }
 
@@ -562,3 +512,6 @@ class _AllAppsViewState extends State<AllAppsView> {
     }
   }
 }
+
+
+

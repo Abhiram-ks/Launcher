@@ -1,8 +1,15 @@
+
+import 'core/themes/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:minilauncher/core/themes/app_themes.dart';
-import 'package:minilauncher/features/view/screens/root_screen.dart';
-import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
+import 'features/view/screens/root_screen/root_screen.dart';
+import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
+
+
+void main(){
+  runApp(const MyApp());
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -15,14 +22,9 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.darkTheme,
         debugShowCheckedModeBanner: false,
         initialRoute: "/",
-        routes: {
-          '/': (context) => const RootScreen(),
-        },
+        routes: {'/': (context) => const RootScreen()},
       ),
     );
   }
 }
 
-void main() {
-  runApp(const MyApp());
-}

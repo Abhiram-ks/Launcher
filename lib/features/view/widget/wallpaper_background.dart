@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
+import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
 
 class WallpaperBackground extends StatelessWidget {

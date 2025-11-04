@@ -5,7 +5,7 @@ import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view/screens/apps_screen/all_apps_screen.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/settings_screen.dart';
-import 'package:minilauncher/features/view_model/bloc/bloc/root_bloc_dart_bloc.dart';
+import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
 class ShowPrioritizedMainApps extends StatefulWidget {
   final LoadPrioritizedAppsState state;
@@ -111,6 +111,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                           fontWeight: FontWeight.w300,
                         ),
                       ),
+                      Text('Hold to open Settings', style: TextStyle(color: AppPalette.greyColor,fontSize: 11),),
                       TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0, end: 1),
                         duration: const Duration(minutes: 15),
@@ -236,7 +237,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                                         strokeWidth: 3,
                                       ),
                                     ),
-                                    const SizedBox(height: 20),
+                                    ConstantWidgets.hight20(context), 
                                     Text(
                                       'Loading all apps...',
                                       style: TextStyle(

@@ -1,4 +1,4 @@
-import 'package:minilauncher/core/constant/app_images.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class WallpaperPrefs {
