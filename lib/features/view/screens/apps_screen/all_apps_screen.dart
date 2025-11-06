@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +6,9 @@ import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/model/models/app_model.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
+import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
+import 'package:minilauncher/core/service/app_text_style_notifier.dart';
+import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
 class AllAppsView extends StatefulWidget {
@@ -55,7 +56,7 @@ class _AllAppsViewState extends State<AllAppsView> {
 
     // Group apps by first letter with proper validation
     for (var appModel in _filteredApps) {
-      final appName = appModel.app.appName.trim();
+      final appName = appModel.app.name.trim();
       if (appName.isEmpty) continue;
 
       final firstChar = appName[0].toUpperCase();
@@ -86,7 +87,7 @@ class _AllAppsViewState extends State<AllAppsView> {
 
     // Sort apps within each group
     groupedApps.forEach((key, value) {
-      value.sort((a, b) => a.app.appName.compareTo(b.app.appName));
+      value.sort((a, b) => a.app.name.compareTo(b.app.name));
     });
 
     // Create section keys AFTER grouping
@@ -120,7 +121,7 @@ class _AllAppsViewState extends State<AllAppsView> {
             widget.state.allApps
                 .where(
                   (appInfo) =>
-                      appInfo.app.appName.toLowerCase().contains(query),
+                      appInfo.app.name.toLowerCase().contains(query),
                 )
                 .toList();
         _showingAlphabetIndex = false;
@@ -165,7 +166,7 @@ class _AllAppsViewState extends State<AllAppsView> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         body: WallpaperBackground(
           child: Stack(
             children: [
@@ -281,22 +282,37 @@ class _AllAppsViewState extends State<AllAppsView> {
             // Apps in this section
             ...apps.map((appModel) {
               final app = appModel.app;
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                leading:
-                    (app is ApplicationWithIcon)
-                        ? Image.memory(app.icon, width: 40, height: 40)
-                        : SizedBox(width: 40, height: 40),
-                title: Text(
-                  app.appName,
-                  style: const TextStyle(color: Colors.white60),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                onTap: () {
-                  context.read<RootBloc>().add(
-                    LaunchAppEvent(packageName: app.packageName),
+              return ValueListenableBuilder(
+                valueListenable: AppTextStyleNotifier.instance,
+                builder: (context, _, __) {
+                  return ValueListenableBuilder(
+                    valueListenable: AppFontSizeNotifier.instance,
+                    builder: (context, ___, ____) {
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                        leading: AppIconWidget(
+                          iconData: app.icon,
+                          size: 40,
+                          appName: app.name,
+                        ),
+                        title: Text(
+                          app.name,
+                          style: TextStyle(
+                            color: AppTextStyleNotifier.instance.textColor,
+                            fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                            fontSize: AppFontSizeNotifier.instance.value,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                        onTap: () {
+                          context.read<RootBloc>().add(
+                            LaunchAppEvent(packageName: app.packageName),
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               );
@@ -313,18 +329,41 @@ class _AllAppsViewState extends State<AllAppsView> {
       itemCount: _filteredApps.length,
       itemBuilder: (context, index) {
         final app = _filteredApps[index].app;
-        return ListTile(
-          title: Row(
-            children: [
-              if (app is ApplicationWithIcon)
-                Image.memory(app.icon, width: 40, height: 40),
-              ConstantWidgets.width20(context),
-              Text(app.appName, style: const TextStyle(color: Colors.white60)),
-            ],
-          ),
-          onTap: () {
-            context.read<RootBloc>().add(
-              LaunchAppEvent(packageName: app.packageName),
+        return ValueListenableBuilder(
+          valueListenable: AppTextStyleNotifier.instance,
+          builder: (context, _, __) {
+            return ValueListenableBuilder(
+              valueListenable: AppFontSizeNotifier.instance,
+              builder: (context, ___, ____) {
+                return ListTile(
+                  title: Row(
+                    children: [
+                      AppIconWidget(
+                        iconData: app.icon,
+                        size: 40,
+                        appName: app.name,
+                      ),
+                      ConstantWidgets.width20(context),
+                      Expanded(
+                        child: Text(
+                          app.name,
+                          style: TextStyle(
+                            color: AppTextStyleNotifier.instance.textColor,
+                            fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                            fontSize: AppFontSizeNotifier.instance.value,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    context.read<RootBloc>().add(
+                      LaunchAppEvent(packageName: app.packageName),
+                    );
+                  },
+                );
+              },
             );
           },
         );

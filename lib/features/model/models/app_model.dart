@@ -1,7 +1,7 @@
-import 'package:device_apps/device_apps.dart';
+import 'package:installed_apps/app_info.dart';
 
 class AppsModel {
-  final Application app;
+  final AppInfo app;
 
   AppsModel({required this.app});
 }

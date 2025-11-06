@@ -4,7 +4,6 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -16,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.boeko.minilauncher"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -29,16 +28,16 @@ android {
     }
 
     defaultConfig {
-        // Unique Application ID
         applicationId = "com.boeko.minilauncher"
-
-        // SDK versions
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-
-        // Versioning
-        versionCode = 7
+        targetSdk = 36
+        versionCode = 18
         versionName = "1.0.0"
+
+        
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
     }
 
     signingConfigs {
@@ -62,6 +61,5 @@ flutter {
 }
 
 dependencies {
-    // Kotlin DSL syntax
     implementation("com.google.android.material:material:1.12.0")
 }

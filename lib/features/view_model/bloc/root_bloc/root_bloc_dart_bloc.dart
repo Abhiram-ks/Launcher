@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:device_apps/device_apps.dart';
+import 'package:installed_apps/app_info.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:minilauncher/core/service/launcher_service.dart';
 import 'package:minilauncher/features/model/data/appvalues.dart';
@@ -63,42 +64,42 @@ class RootBloc extends Bloc<RootEvent, RootState> {
 
   Future<void> loadAppsEvent(LoadAppsEvent event, Emitter<RootState> emit) async {
     emit(PreparingAllAppsLoadingState());
-    List<Application> allApps = AppValues.allApps;
+    List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
-      allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
+      allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
+      AppValues.allApps = allApps; // Cache immediately
     }
     emit(PreparedAllAppsLoadedState());
     emit(InitialAllAppsLoadedState(allApps: allApps.map((app) => AppsModel(app: app)).toList()));
-    AppValues.allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
   }
 
 
 
   FutureOr<void> launchAppEvent(LaunchAppEvent event, Emitter<RootState> emit) {
-    DeviceApps.openApp(event.packageName);
+    InstalledApps.startApp(event.packageName);
   }
 
   Future<void> loadAllPrioritizedAppsEvent(LoadAllPrioritizedAppsEvent event, Emitter<RootState> emit) async {
     List<String> prioritizedPackageNames = await PriorityAppsPrefs().getPriorityApps();
-    List<Application> allApps = AppValues.allApps;
+    List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
-      allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
+      allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
+      AppValues.allApps = allApps; // Cache immediately
     }
     List<AppsModel> prioritizedApps = allApps.where((app) => prioritizedPackageNames.contains(app.packageName)).map((app) => AppsModel(app: app)).toList();
     emit(LoadPrioritizedAppsState(prioritizedApps: prioritizedApps));
-    AppValues.allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
   }
 
   Future<void> rootInitialEvent(RootInitialEvent event, Emitter<RootState> emit) async {
     List<String> prioritizedPackageNames = await PriorityAppsPrefs().getPriorityApps();
     if (prioritizedPackageNames.isEmpty) {
-      List<Application> allApps = AppValues.allApps;
+      List<AppInfo> allApps = AppValues.allApps;
       if (allApps.isEmpty) {
-        allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
+        allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
+        AppValues.allApps = allApps; // Cache immediately
       }
       List<AppsModel> allAppsModels = allApps.map((app) => AppsModel(app: app)).toList();
       emit(SelectPriorityAppState(allApps: allAppsModels, selectedPackages: {}));
-      AppValues.allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
     } else {
       add(LoadAllPrioritizedAppsEvent());
     }
@@ -124,12 +125,12 @@ class RootBloc extends Bloc<RootEvent, RootState> {
 
   Future<void> editPriorityAppsEvent(EditPriorityAppsEvent event, Emitter<RootState> emit) async {
     List<String> prioritizedPackageNames = await PriorityAppsPrefs().getPriorityApps();
-    List<Application> allApps = AppValues.allApps;
+    List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
-      allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
+      allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
+      AppValues.allApps = allApps; // Cache immediately
     }
     List<AppsModel> allAppsModels = allApps.map((app) => AppsModel(app: app)).toList();
     emit(SelectPriorityAppState(allApps: allAppsModels, selectedPackages: prioritizedPackageNames.toSet()));
-    AppValues.allApps = await DeviceApps.getInstalledApplications(includeSystemApps:true, onlyAppsWithLaunchIntent: true, includeAppIcons: true);
   }
 }

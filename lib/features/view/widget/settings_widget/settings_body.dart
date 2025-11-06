@@ -5,6 +5,8 @@ import 'package:minilauncher/core/common/custom_launcher.dart';
 import 'package:minilauncher/core/service/launcher_service.dart';
 import 'package:minilauncher/features/model/data/appvalues.dart';
 import 'package:minilauncher/features/view/screens/select_wallpaper/select_wallpaper_screen.dart';
+import 'package:minilauncher/features/view/screens/settings_screen/select_shape_screen.dart';
+import 'package:minilauncher/features/view/screens/settings_screen/select_text_style_screen.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import '../../../view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
@@ -62,6 +64,42 @@ Widget bodyPartOfSettings({required BuildContext context}) {
             context.read<RootBloc>().add(EditPriorityAppsEvent());
           },
         ),
+      ),
+      ListTile(
+        leading: Icon(
+          CupertinoIcons.circle_grid_3x3,
+          color: AppPalette.whiteColor,
+        ),
+        title: Text(
+          'Change Icon Shape',
+          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SelectShapeScreen(),
+            ),
+          );
+        },
+      ),
+      ListTile(
+        leading: Icon(
+          CupertinoIcons.textformat,
+          color: AppPalette.whiteColor,
+        ),
+        title: Text(
+          'Text Style Settings',
+          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SelectTextStyleScreen(),
+            ),
+          );
+        },
       ),
       ListTile(
         leading: Icon(

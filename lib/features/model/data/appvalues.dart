@@ -1,7 +1,7 @@
-import 'package:device_apps/device_apps.dart';
+import 'package:installed_apps/app_info.dart';
 
 class AppValues {
-  static List<Application> allApps = [];
-  static List<Application> priorityApps = [];
+  static List<AppInfo> allApps = [];
+  static List<AppInfo> priorityApps = [];
   static bool isAppDefault = false;
 }

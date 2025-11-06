@@ -1,10 +1,13 @@
-import 'package:device_apps/device_apps.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view/screens/apps_screen/all_apps_screen.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/settings_screen.dart';
+import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
+import 'package:minilauncher/core/service/app_text_style_notifier.dart';
+import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
 class ShowPrioritizedMainApps extends StatefulWidget {
@@ -141,21 +144,37 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
               itemBuilder: (context, index) {
                 if (index < state.prioritizedApps.length) {
                   final app = state.prioritizedApps[index].app;
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    leading:  (app is ApplicationWithIcon)
-                            ? Image.memory(app.icon, width: 40, height: 40)
-                            : const SizedBox(width: 40, height: 40),
-                    title: Text(
-                      app.appName,
-                      style: const TextStyle(color: Colors.white60),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                    ),
-                    onTap: () {
-                      context.read<RootBloc>().add(
-                        LaunchAppEvent(packageName: app.packageName),
+                  return ValueListenableBuilder(
+                    valueListenable: AppTextStyleNotifier.instance,
+                    builder: (context, _, __) {
+                      return ValueListenableBuilder(
+                        valueListenable: AppFontSizeNotifier.instance,
+                        builder: (context, ___, ____) {
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            leading: AppIconWidget(
+                              iconData: app.icon,
+                              size: 40,
+                              appName: app.name,
+                            ),
+                            title: Text(
+                              app.name,
+                              style: TextStyle(
+                                color: AppTextStyleNotifier.instance.textColor,
+                                fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                                fontSize: AppFontSizeNotifier.instance.value,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
+                            ),
+                            onTap: () {
+                              context.read<RootBloc>().add(
+                                LaunchAppEvent(packageName: app.packageName),
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                   );
