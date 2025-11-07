@@ -10,27 +10,75 @@ import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
 import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
+import 'package:minilauncher/core/service/screen_control_service.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 
-class RootScreen extends StatelessWidget {
+class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
+
+  @override
+  State<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends State<RootScreen> {
+  DateTime? _lastDoubleTapTime;
+  bool _isProcessing = false;
+  static const Duration _debounceDelay = Duration(milliseconds: 1000);
+
+  Future<void> _handleDoubleTap() async {
+    // Debounce to prevent multiple rapid calls
+    final now = DateTime.now();
+    
+    // Check if already processing
+    if (_isProcessing) {
+      return; // Already processing, ignore
+    }
+    
+    // Check if too soon after last double-tap
+    if (_lastDoubleTapTime != null && 
+        now.difference(_lastDoubleTapTime!) < _debounceDelay) {
+      return; // Too soon after last double-tap, ignore
+    }
+    
+    // Set flags immediately to prevent multiple calls
+    _lastDoubleTapTime = now;
+    _isProcessing = true;
+    
+    try {
+      // Only turn off the screen (no turn on functionality)
+      await ScreenControlService.turnOffScreen();
+    } catch (e) {
+      // Silently handle errors - screen control may not be available on all devices
+      debugPrint('Screen control error: $e');
+    } finally {
+      // Reset processing flag after a longer delay to ensure screen stays off
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+          });
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false, 
       child: SafeArea(
-        child: Scaffold(
-          resizeToAvoidBottomInset: true,
+        child: GestureDetector(
+          onDoubleTap: _handleDoubleTap,
+          child: Scaffold(
+            resizeToAvoidBottomInset: true,
             body: WallpaperBackground(
               child: bodyPartOfRootScreen(context),
             ),
           ),
+        ),
       ),
     );
   }
-
-
 }
 
   Widget bodyPartOfRootScreen(BuildContext context) {
