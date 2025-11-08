@@ -52,18 +52,50 @@ class AppIconWidget extends StatelessWidget {
 
   BorderRadius _getBorderRadius(AppIconShape shape) {
     switch (shape) {
-      case AppIconShape.rectangle:
-        return BorderRadius.circular(8);
+      case AppIconShape.squircle:
+        return BorderRadius.circular(size * 0.25); // iOS-style smooth curve
       case AppIconShape.circle:
         return BorderRadius.circular(size / 2);
-      case AppIconShape.square:
-        return BorderRadius.zero;
+      case AppIconShape.roundedSquare:
+        return BorderRadius.circular(size * 0.2);
+      case AppIconShape.rectangle:
+        return BorderRadius.circular(size * 0.15);
+      case AppIconShape.teardrop:
+        return BorderRadius.only(
+          topLeft: Radius.circular(size / 2),
+          topRight: Radius.circular(size / 2),
+          bottomLeft: Radius.circular(size * 0.15),
+          bottomRight: Radius.circular(size * 0.15),
+        );
+      case AppIconShape.pebble:
+        return BorderRadius.only(
+          topLeft: Radius.circular(size * 0.35),
+          topRight: Radius.circular(size * 0.3),
+          bottomLeft: Radius.circular(size * 0.3),
+          bottomRight: Radius.circular(size * 0.35),
+        );
       case AppIconShape.clipped:
         return BorderRadius.only(
           topLeft: Radius.circular(size * 0.3),
           topRight: Radius.circular(size * 0.3),
           bottomRight: Radius.circular(size * 0.3),
+          bottomLeft: Radius.zero,
         );
+      case AppIconShape.hexagon:
+        return BorderRadius.circular(size * 0.12); // Slight rounding for hexagon effect
+      case AppIconShape.octagon:
+        return BorderRadius.circular(size * 0.18); // Octagon-like rounding
+      case AppIconShape.leaf:
+        return BorderRadius.only(
+          topLeft: Radius.circular(size * 0.1),
+          topRight: Radius.circular(size * 0.4),
+          bottomLeft: Radius.circular(size * 0.4),
+          bottomRight: Radius.circular(size * 0.1),
+        );
+      case AppIconShape.square:
+        return BorderRadius.zero;
+      case AppIconShape.stadium:
+        return BorderRadius.circular(size * 0.4); // Pill shape
     }
   }
 

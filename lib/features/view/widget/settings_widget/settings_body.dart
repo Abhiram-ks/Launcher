@@ -3,27 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/common/custom_launcher.dart';
 import 'package:minilauncher/core/service/launcher_service.dart';
+import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/features/model/data/appvalues.dart';
 import 'package:minilauncher/features/view/screens/select_wallpaper/select_wallpaper_screen.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/select_shape_screen.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/select_text_style_screen.dart';
 
-import '../../../../core/themes/app_colors.dart';
 import '../../../view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
 import '../../../view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
+import '../../../view_model/cubit/double_tap_cubit.dart';
+import 'settings_list_tile.dart';
 
 Widget bodyPartOfSettings({required BuildContext context}) {
   return Column(
     children: [
-      ListTile(
-        leading: Icon(
-          CupertinoIcons.photo_on_rectangle,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          "Change Wallpaper",
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: "Change Wallpaper",
+        icon: CupertinoIcons.photo_on_rectangle,
         onTap: () {
           Navigator.push(
             context,
@@ -51,29 +47,17 @@ Widget bodyPartOfSettings({required BuildContext context}) {
             Navigator.pop(context);
           }
         },
-        child: ListTile(
-          leading: Icon(
-            CupertinoIcons.square_grid_2x2,
-            color: AppPalette.whiteColor,
-          ),
-          title: Text(
-            'Manage Priority Apps',
-            style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-          ),
+        child: SettingsListTile(
+          title: 'Manage Priority Apps',
+          icon: CupertinoIcons.square_grid_2x2,
           onTap: () {
             context.read<RootBloc>().add(EditPriorityAppsEvent());
           },
         ),
       ),
-      ListTile(
-        leading: Icon(
-          CupertinoIcons.circle_grid_3x3,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          'Change Icon Shape',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: 'Change Icon Shape',
+        icon: CupertinoIcons.circle_grid_3x3,
         onTap: () {
           Navigator.push(
             context,
@@ -83,15 +67,9 @@ Widget bodyPartOfSettings({required BuildContext context}) {
           );
         },
       ),
-      ListTile(
-        leading: Icon(
-          CupertinoIcons.textformat,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          'Text Style Settings',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: 'Style Settings',
+        icon: CupertinoIcons.textformat,
         onTap: () {
           Navigator.push(
             context,
@@ -101,51 +79,48 @@ Widget bodyPartOfSettings({required BuildContext context}) {
           );
         },
       ),
-      ListTile(
-        leading: Icon(
-          CupertinoIcons.bubble_left_bubble_right,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          'Send Feedback',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      BlocBuilder<DoubleTapCubit, bool>(
+        builder: (context, isEnabled) {
+          return SettingsListTile(
+            title: 'Double tap turn ${isEnabled ? 'off' : 'on'} screen',
+            icon: CupertinoIcons.power,
+            trailing: Transform.scale(
+              scale: 0.6,
+              child: CupertinoSwitch(
+                value: isEnabled,
+                activeTrackColor: AppTextStyleNotifier.instance.textColor,
+                onChanged: (_) {
+                  context.read<DoubleTapCubit>().toggle();
+                },
+              ),
+            ),
+          );
+        },
+      ),
+      SettingsListTile(
+        title: 'Send Feedback',
+        icon: CupertinoIcons.bubble_left_bubble_right,
         onTap: () {
           sendFeedback(context);
         },
       ),
-      ListTile(
-        leading: Icon(
-          Icons.settings_accessibility_outlined,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          AppValues.isAppDefault ? 'Change default app' : 'Set as default app',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: AppValues.isAppDefault ? 'Change default app' : 'Set as default app',
+        icon: Icons.settings_accessibility_outlined,
         onTap: () async {
           await LauncherService.setAsDefaultLauncher();
         },
       ),
-      ListTile(
-        leading: Icon(CupertinoIcons.doc_text, color: AppPalette.whiteColor),
-        title: Text(
-          'Terms and Conditions',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: 'Terms and Conditions',
+        icon: CupertinoIcons.doc_text,
         onTap: () {
           openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/e0053561-a7ca-4001-b169-331ba91ee86e', errorMessage: 'Terms and Conditions cannot be opened at the moment due to an error.',);
         },
       ),
-      ListTile(
-        leading: Icon(
-          CupertinoIcons.checkmark_shield,
-          color: AppPalette.whiteColor,
-        ),
-        title: Text(
-          'Privacy Policy',
-          style: TextStyle(color: AppPalette.whiteColor, fontSize: 15),
-        ),
+      SettingsListTile(
+        title: 'Privacy Policy',
+        icon: CupertinoIcons.checkmark_shield,
         onTap: () {
           openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/2e7d9a61-0733-4688-b5a5-458ce10be82f', errorMessage: 'Privacy Policy cannot be opened at the moment due to an error.',);
         },

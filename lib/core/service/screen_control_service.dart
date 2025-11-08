@@ -32,5 +32,26 @@ class ScreenControlService {
       return false;
     }
   }
+
+  static Future<bool> isDeviceAdminEnabled() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('isDeviceAdminEnabled');
+      return result ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> requestDeviceAdmin() async {
+    try {
+      await _channel.invokeMethod<void>('requestDeviceAdmin');
+    } catch (_) {}
+  }
+
+  static Future<void> openAccessibilitySettings() async {
+    try {
+      await _channel.invokeMethod<void>('openAccessibilitySettings');
+    } catch (_) {}
+  }
 }
 

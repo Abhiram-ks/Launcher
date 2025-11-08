@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:minilauncher/core/constant/storage_keys.dart';
+import 'package:minilauncher/core/service/hive_storage.dart';
 import 'package:minilauncher/core/constant/app_font_weights.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 
@@ -12,42 +13,42 @@ class AppTextStylePrefs {
     return instance;
   }
 
-  static const String _colorKey = 'app_text_color';
-  static const String _fontWeightKey = 'app_text_font_weight';
+  static const String _colorKey = StorageKeys.textColor;
+  static const String _fontWeightKey = StorageKeys.textFontWeight;
   
   // Default values
   static const Color _defaultColor = Colors.white60;
   static const FontWeight _defaultFontWeight = FontWeight.normal;
+  static const String _defaultFontFamily = 'Roboto';
 
   Future<void> setTextColor(Color color) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = HiveStorage.settingsBox;
     // Calculate ARGB32 value from color components to avoid deprecated .value
     final argb32 = ((color.a * 255).round() << 24) |
                     ((color.r * 255).round() << 16) |
                     ((color.g * 255).round() << 8) |
                     (color.b * 255).round();
-    await prefs.setInt(_colorKey, argb32);
+    await prefs.put(_colorKey, argb32);
     AppTextStyleNotifier.instance.updateTextColor(color);
   }
 
   Future<Color> getTextColor() async {
-    final prefs = await SharedPreferences.getInstance();
-    final colorValue = prefs.getInt(_colorKey);
+    final prefs = HiveStorage.settingsBox;
+    final int? colorValue = prefs.get(_colorKey) as int?;
     final color = colorValue == null ? _defaultColor : Color(colorValue);
-    AppTextStyleNotifier.instance.updateTextColor(color);
     return color;
   }
 
   Future<void> setFontWeight(FontWeight fontWeight) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = HiveStorage.settingsBox;
     // Store the weight value (100, 400, 500, etc.)
-    await prefs.setInt(_fontWeightKey, fontWeight.value);
+    await prefs.put(_fontWeightKey, fontWeight.value);
     AppTextStyleNotifier.instance.updateFontWeight(fontWeight);
   }
 
   Future<FontWeight> getFontWeight() async {
-    final prefs = await SharedPreferences.getInstance();
-    final fontWeightValue = prefs.getInt(_fontWeightKey);
+    final prefs = HiveStorage.settingsBox;
+    final int? fontWeightValue = prefs.get(_fontWeightKey) as int?;
     FontWeight fontWeight = _defaultFontWeight;
     
     if (fontWeightValue != null) {
@@ -69,15 +70,26 @@ class AppTextStylePrefs {
         fontWeight = _defaultFontWeight;
       }
     }
-    AppTextStyleNotifier.instance.updateFontWeight(fontWeight);
     return fontWeight;
   }
 
   Future<void> clearTextStyle() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_colorKey);
-    await prefs.remove(_fontWeightKey);
+    final prefs = HiveStorage.settingsBox;
+    await prefs.delete(_colorKey);
+    await prefs.delete(_fontWeightKey);
     AppTextStyleNotifier.instance.updateTextStyle(_defaultColor, _defaultFontWeight);
+  }
+
+  Future<void> setFontFamily(String family) async {
+    final prefs = HiveStorage.settingsBox;
+    await prefs.put(StorageKeys.textFontFamily, family);
+    AppTextStyleNotifier.instance.updateFontFamily(family);
+  }
+
+  Future<String> getFontFamily() async {
+    final prefs = HiveStorage.settingsBox;
+    final String? fam = prefs.get(StorageKeys.textFontFamily) as String?;
+    return fam ?? _defaultFontFamily;
   }
 }
 

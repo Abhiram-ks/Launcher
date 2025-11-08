@@ -1,365 +1,432 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/constant/app_font_weights.dart';
 import 'package:minilauncher/core/constant/app_font_sizes.dart';
 import 'package:minilauncher/core/constant/app_text_colors.dart';
 import 'package:minilauncher/core/constant/constant.dart';
-import 'package:minilauncher/core/service/app_text_style_notifier.dart';
-import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
-import 'package:minilauncher/features/model/data/app_text_style_prefs.dart';
-import 'package:minilauncher/features/model/data/app_font_size_prefs.dart';
-import '../../../../core/common/custom_appbar.dart';
-import '../../../../core/common/custom_snackbar.dart';
+import 'package:minilauncher/features/view_model/cubit/text_style_cubit.dart';
 
-class SelectTextStyleScreen extends StatefulWidget {
+import '../../../../core/common/custom_appbar.dart';
+
+class SelectTextStyleScreen extends StatelessWidget {
   const SelectTextStyleScreen({super.key});
 
   @override
-  State<SelectTextStyleScreen> createState() => _SelectTextStyleScreenState();
-}
-
-class _SelectTextStyleScreenState extends State<SelectTextStyleScreen> {
-  Color? _selectedColor;
-  FontWeight? _selectedFontWeight;
-  double? _selectedFontSize;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentStyle();
-    AppTextStyleNotifier.instance.addListener(_onStyleChanged);
-    AppFontSizeNotifier.instance.addListener(_onStyleChanged);
-  }
-
-  @override
-  void dispose() {
-    AppTextStyleNotifier.instance.removeListener(_onStyleChanged);
-    AppFontSizeNotifier.instance.removeListener(_onStyleChanged);
-    super.dispose();
-  }
-
-  void _onStyleChanged() {
-    setState(() {
-      _selectedColor = AppTextStyleNotifier.instance.textColor;
-      _selectedFontWeight = AppTextStyleNotifier.instance.fontWeight;
-      _selectedFontSize = AppFontSizeNotifier.instance.value;
-    });
-  }
-
-  Future<void> _loadCurrentStyle() async {
-    final color = await AppTextStylePrefs().getTextColor();
-    final fontWeight = await AppTextStylePrefs().getFontWeight();
-    final fontSize = await AppFontSizePrefs().getSize();
-    // Normalize the font weight to ensure it matches one in the dropdown
-    final normalizedWeight = AppFontWeights.normalizeWeight(fontWeight);
-    setState(() {
-      _selectedColor = color;
-      _selectedFontWeight = normalizedWeight;
-      _selectedFontSize = fontSize;
-      _isLoading = false;
-    });
-    AppTextStyleNotifier.instance.updateTextStyle(color, normalizedWeight);
-  }
-
-  Future<void> _saveColor(Color color) async {
-    await AppTextStylePrefs().setTextColor(color);
-    AppTextStyleNotifier.instance.updateTextColor(color);
-    if (mounted) {
-      CustomSnackBar.show(
-        context,
-        message: 'Text color changed',
-        backgroundColor: AppPalette.greenColor,
-        textColor: AppPalette.whiteColor,
-        durationSeconds: 1,
-        textAlign: TextAlign.center,
-      );
-    }
-  }
-
-  Future<void> _saveFontWeight(FontWeight fontWeight) async {
-    await AppTextStylePrefs().setFontWeight(fontWeight);
-    AppTextStyleNotifier.instance.updateFontWeight(fontWeight);
-    if (mounted) {
-      CustomSnackBar.show(
-        context,
-        message: 'Font weight changed to ${AppFontWeights.getWeightName(fontWeight)}',
-        backgroundColor: AppPalette.greenColor,
-        textColor: AppPalette.whiteColor,
-        durationSeconds: 1,
-        textAlign: TextAlign.center,
-      );
-    }
-  }
-
-  Future<void> _saveFontSize(double fontSize) async {
-    await AppFontSizePrefs().setSize(fontSize);
-    AppFontSizeNotifier.instance.updateSize(fontSize);
-    if (mounted) {
-      CustomSnackBar.show(
-        context,
-        message: 'Font size changed to ${AppFontSizes.getSizeName(fontSize)}',
-        backgroundColor: AppPalette.greenColor,
-        textColor: AppPalette.whiteColor,
-        durationSeconds: 1,
-        textAlign: TextAlign.center,
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: CustomAppBar(
-        title: 'Text Style Settings',
-        backgroundColor: AppPalette.blackColor,
-        titleColor: AppPalette.whiteColor,
-        iconColor: AppPalette.whiteColor,
-        isTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: AppPalette.orengeColor,
-              ),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Text Color',
-                      style: TextStyle(
-                        color: AppPalette.whiteColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: AppTextColors.availableColors.map((color) {
-                        final isSelected = _selectedColor != null && 
-                            _selectedColor == color;
-                        return GestureDetector(
-                          onTap: () => _saveColor(color),
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppPalette.orengeColor 
-                                    : Colors.white30,
-                                width: isSelected ? 3 : 1,
-                              ),
-                            ),
-                            child: isSelected
-                                ? const Icon(
-                                    CupertinoIcons.checkmark_alt,
-                                    color: Colors.black,
-                                    size: 20,
-                                  )
-                                : null,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  ConstantWidgets.hight10(context),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Font Weight',
-                      style: TextStyle(
-                        color: AppPalette.whiteColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white30,
-                          width: 1,
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<FontWeight>(
-                          value: _selectedFontWeight != null 
-                              ? AppFontWeights.normalizeWeight(_selectedFontWeight!)
-                              : null,
-                          isExpanded: true,
-                          dropdownColor: Colors.grey.shade900,
-                          style: TextStyle(
-                            color: AppPalette.whiteColor,
-                            fontSize: 15,
-                          ),
-                          icon: Icon(
-                            CupertinoIcons.chevron_down,
-                            color: AppPalette.whiteColor,
-                          ),
-                          items: AppFontWeights.availableWeights.map((weight) {
-                            final normalizedSelected = AppFontWeights.normalizeWeight(_selectedFontWeight ?? FontWeight.normal);
-                            final normalizedWeight = AppFontWeights.normalizeWeight(weight);
-                            final isSelected = normalizedSelected == normalizedWeight;
-                            return DropdownMenuItem<FontWeight>(
-                              value: weight,
-                              child: Row(
-                                children: [
-                                  ConstantWidgets.width20(context),
-                              
-                                  Expanded(
-                                    child: Text(
-                                      AppFontWeights.getWeightName(weight),
-                                      style: TextStyle(
-                                        fontWeight: weight,
-                                        color: AppPalette.whiteColor,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      CupertinoIcons.checkmark_alt,
-                                      color: AppPalette.orengeColor,
-                                      size: 18,
-                                    ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (FontWeight? newWeight) {
-                            if (newWeight != null) {
-                              _saveFontWeight(newWeight);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  ConstantWidgets.hight10(context),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Font Size',
-                      style: TextStyle(
-                        color: AppPalette.whiteColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white30,
-                          width: 1,
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<double>(
-                          value: _selectedFontSize,
-                          isExpanded: true,
-                          dropdownColor: Colors.grey.shade900,
-                          style: TextStyle(
-                            color: AppPalette.whiteColor,
-                            fontSize: 15,
-                          ),
-                          icon: Icon(
-                            CupertinoIcons.chevron_down,
-                            color: AppPalette.whiteColor,
-                          ),
-                          items: AppFontSizes.availableSizes.map((size) {
-                            final isSelected = _selectedFontSize == size;
-                            return DropdownMenuItem<double>(
-                              value: size,
-                              child: Row(
-                                children: [
-                                  ConstantWidgets.width20(context),
-                                  Expanded(
-                                    
-                                    child: Text(
-                                      AppFontSizes.getSizeName(size),
-                                      style: TextStyle(
-                                        fontSize: size,
-                                        color:  AppPalette.whiteColor,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      CupertinoIcons.checkmark_alt,
-                                      color: AppPalette.orengeColor,
-                                      size: 18,
-                                    ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (double? newSize) {
-                            if (newSize != null) {
-                              _saveFontSize(newSize);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  ConstantWidgets.hight10(context),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Preview',
-                          style: TextStyle(
-                            color: AppPalette.whiteColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Sample App Name',
-                            style: TextStyle(
-                              color: _selectedColor ?? AppPalette.whiteColor,
-                              fontWeight: _selectedFontWeight ?? FontWeight.normal,
-                              fontSize: _selectedFontSize ?? AppFontSizes.defaultSize,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return BlocProvider(
+      create: (_) => TextStyleCubit()..load(),
+      child: const _SelectTextStyleScreenBody(),
     );
   }
 }
 
+class _SelectTextStyleScreenBody extends StatelessWidget {
+  const _SelectTextStyleScreenBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<TextStyleCubit, TextStyleState>(
+      builder: (context, ts) {
+        if (ts.isLoading) {
+          return const Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Center(
+              child: CircularProgressIndicator(color: AppPalette.orengeColor),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: CustomAppBar(
+            title: 'Text Style',
+            backgroundColor: AppPalette.blackColor,
+            isTitle: true,
+          ),
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPreviewSection(context, ts),
+                ConstantWidgets.hight10(context),
+                // Text Color Section
+                _buildSection(
+                  context: context,
+                  ts: ts,
+                  icon: CupertinoIcons.paintbrush_fill,
+                  title: 'Text Color',
+                  child: _buildColorPicker(context, ts),
+                ),
+                
+                // Font Family Section
+                _buildSection(
+                  context: context,
+                  ts: ts,
+                  icon: CupertinoIcons.textformat,
+                  title: 'Font Family',
+                  child: _buildFontFamilySelector(context, ts),
+                ),
+                
+                // Font Weight Section
+                _buildSection(
+                  context: context,
+                  ts: ts,
+                  icon: CupertinoIcons.bold,
+                  title: 'Font Weight',
+                  child: _buildFontWeightSelector(context, ts),
+                ),
+                
+                // Font Size Section
+                _buildSection(
+                  context: context,
+                  ts: ts,
+                  icon: CupertinoIcons.textformat_size,
+                  title: 'Font Size',
+                  child: _buildFontSizeSelector(context, ts),
+                ),
+                
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Section Builder
+  static Widget _buildSection({
+    required BuildContext context,
+    required TextStyleState ts,
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: ts.color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: ts.color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: GoogleFonts.getFont(
+                  ts.fontFamily,
+                  textStyle: TextStyle(
+                    color: ts.color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          ConstantWidgets.hight10(context),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // Preview Section
+  static Widget _buildPreviewSection(BuildContext context, TextStyleState ts) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            ts.color.withValues(alpha: 0.15),
+            ts.color.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ts.color.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.eye_fill,
+                color: ts.color.withValues(alpha: 0.7),
+                size: 16,
+              ),
+              ConstantWidgets.width10(context),
+              Text(
+                'Preview',
+                style: GoogleFonts.getFont(
+                  ts.fontFamily,
+                  textStyle: TextStyle(
+                    color: ts.color.withValues(alpha: 0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Text(
+            'Sample App Name',
+            style: GoogleFonts.getFont(
+              ts.fontFamily,
+              textStyle: TextStyle(
+                color: ts.color,
+                fontWeight: ts.fontWeight,
+                fontSize: ts.fontSize,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Color Picker
+  static Widget _buildColorPicker(BuildContext context, TextStyleState ts) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: AppTextColors.availableColors.map((color) {
+        final isSelected = ts.color == color;
+        return GestureDetector(
+          onTap: () => context.read<TextStyleCubit>().setColor(color),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isSelected ? 30 : 26,
+            height: isSelected ? 30 : 26,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? AppPalette.orengeColor : Colors.white24,
+                width: isSelected ? 3 : 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : [],
+            ),
+            child: isSelected
+                ? const Icon(
+                    CupertinoIcons.checkmark_alt,
+                    color: Colors.black87,
+                    size: 22,
+                  )
+                : null,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Font Family Selector
+  static Widget _buildFontFamilySelector(BuildContext context, TextStyleState ts) {
+    const fontFamilies = [
+      'Roboto',
+      'Poppins',
+      'Lato',
+      'Open Sans',
+      'Montserrat',
+      'Inter',
+      'Nunito',
+      'Nunito Sans',
+      'Source Sans 3',
+      'Work Sans',
+      'Rubik',
+      'Raleway',
+      'Oswald',
+      'Playfair Display',
+      'Merriweather',
+      'Manrope',
+      'DM Sans',
+      'Quicksand',
+      'Ubuntu',
+      'Noto Sans',
+      'Noto Serif',
+      'PT Sans',
+      'PT Serif',
+      'Heebo',
+      'Mulish',
+      'Barlow',
+      'Space Grotesk',
+      'Titillium Web',
+      'Cabin',
+      'Josefin Sans',
+    ];
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 1,
+      children: fontFamilies.map((family) {
+        final isSelected = ts.fontFamily == family;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: ChoiceChip(
+            selected: isSelected,
+            label: Text(
+              family,
+              style: GoogleFonts.getFont(
+                family,
+                textStyle: TextStyle(
+                  color: isSelected ? ts.color : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+            selectedColor: ts.color.withValues(alpha: 0.25),
+            backgroundColor: ts.color.withValues(alpha: 0.05),
+            side: BorderSide(
+              color: isSelected
+                  ? ts.color.withValues(alpha: 0.5)
+                  : Colors.white.withValues(alpha: 0.1),
+              width: isSelected ? 1.5 : 1,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            onSelected: (_) => context.read<TextStyleCubit>().setFontFamily(family),
+            iconTheme: IconThemeData(color: ts.color),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Font Weight Selector
+  static Widget _buildFontWeightSelector(BuildContext context, TextStyleState ts) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ts.color.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<FontWeight>(
+          value: ts.fontWeight,
+          isExpanded: true,
+          dropdownColor: const Color(0xFF1A1A1A),
+          style: TextStyle(color: ts.color, fontSize: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          icon: Icon(CupertinoIcons.chevron_down, color: ts.color, size: 20),
+          items: AppFontWeights.availableWeights.map((weight) {
+            final normalizedSelected = AppFontWeights.normalizeWeight(ts.fontWeight);
+            final normalizedWeight = AppFontWeights.normalizeWeight(weight);
+            final isSelected = normalizedSelected == normalizedWeight;
+            
+            return DropdownMenuItem<FontWeight>(
+              value: weight,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppFontWeights.getWeightName(weight),
+                      style: TextStyle(
+                        fontWeight: weight,
+                        color: ts.color,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      CupertinoIcons.checkmark_alt,
+                      color: ts.color,
+                      size: 20,
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (newWeight) {
+            if (newWeight != null) {
+              context.read<TextStyleCubit>().setFontWeight(newWeight);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  // Font Size Selector
+  static Widget _buildFontSizeSelector(BuildContext context, TextStyleState ts) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ts.color.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<double>(
+          value: ts.fontSize,
+          isExpanded: true,
+          dropdownColor: const Color(0xFF1A1A1A),
+          style: TextStyle(color: ts.color, fontSize: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          icon: Icon(CupertinoIcons.chevron_down, color: ts.color, size: 20),
+          items: AppFontSizes.availableSizes.map((size) {
+            final isSelected = ts.fontSize == size;
+            
+            return DropdownMenuItem<double>(
+              value: size,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppFontSizes.getSizeName(size),
+                      style: TextStyle(
+                        fontSize: size,
+                        color: ts.color,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      CupertinoIcons.checkmark_alt,
+                      color: ts.color,
+                      size: 20,
+                    ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (newSize) {
+            if (newSize != null) {
+              context.read<TextStyleCubit>().setFontSize(newSize);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}

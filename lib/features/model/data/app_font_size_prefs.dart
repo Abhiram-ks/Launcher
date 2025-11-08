@@ -1,4 +1,5 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:minilauncher/core/constant/storage_keys.dart';
+import 'package:minilauncher/core/service/hive_storage.dart';
 import 'package:minilauncher/core/constant/app_font_sizes.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 
@@ -11,26 +12,25 @@ class AppFontSizePrefs {
     return instance;
   }
 
-  static const String _sizeKey = 'app_font_size';
+  static const String _sizeKey = StorageKeys.fontSize;
   static const double _defaultSize = AppFontSizes.defaultSize;
 
   Future<void> setSize(double size) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_sizeKey, size);
+    final prefs = HiveStorage.settingsBox;
+    await prefs.put(_sizeKey, size);
     AppFontSizeNotifier.instance.updateSize(size);
   }
 
   Future<double> getSize() async {
-    final prefs = await SharedPreferences.getInstance();
-    final size = prefs.getDouble(_sizeKey) ?? _defaultSize;
+    final prefs = HiveStorage.settingsBox;
+    final double size = (prefs.get(_sizeKey) as double?) ?? _defaultSize;
     final normalizedSize = AppFontSizes.normalizeSize(size);
-    AppFontSizeNotifier.instance.updateSize(normalizedSize);
     return normalizedSize;
   }
 
   Future<void> clearSize() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_sizeKey);
+    final prefs = HiveStorage.settingsBox;
+    await prefs.delete(_sizeKey);
     AppFontSizeNotifier.instance.updateSize(_defaultSize);
   }
 }

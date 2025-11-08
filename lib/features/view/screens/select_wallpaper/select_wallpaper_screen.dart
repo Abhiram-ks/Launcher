@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:minilauncher/core/common/custom_appbar.dart';
 import 'package:minilauncher/core/common/custom_snackbar.dart';
+import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
@@ -68,18 +70,10 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppPalette.trasprentColor,
-          elevation: 0,
-          title: const Text('Wallpaper Gallery',
-              style: TextStyle(
-                  color: AppPalette.whiteColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          leading: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(CupertinoIcons.left_chevron)),
+        appBar: CustomAppBar(
+          title: "Wallpaper Gallery",
+          isTitle: true,
+          backgroundColor: AppPalette.blackColor,
         ),
         body: Stack(
           children: [
@@ -92,7 +86,7 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
                       image: AssetImage(selectedWallpaper),
                       fit: BoxFit.cover,
                       colorFilter: ColorFilter.mode(
-                        AppPalette.blackColor.withValues(alpha: .4),
+                        AppTextStyleNotifier.instance.textColor.withValues(alpha: .4),
                         BlendMode.darken,
                       ),
                     ),
@@ -201,7 +195,7 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
             boxShadow: [
               if (isSelected)
                 BoxShadow(
-                  color: AppPalette.orengeColor.withValues(alpha: 1),
+                  color: AppTextStyleNotifier.instance.textColor.withValues(alpha: 1),
                   blurRadius: 20,
                   spreadRadius: 3,
                   offset: const Offset(0, 8),
@@ -252,7 +246,7 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
                         CupertinoIcons.check_mark_circled_solid,
                         color: isCurrent
                             ? AppPalette.greenColor
-                            : AppPalette.orengeColor,
+                            : AppTextStyleNotifier.instance.textColor,
                         size: 22,
                       ),
                     ),

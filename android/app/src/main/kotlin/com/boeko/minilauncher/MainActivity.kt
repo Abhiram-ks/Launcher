@@ -142,6 +142,16 @@ class MainActivity: FlutterActivity() {
                     val isEnabled = isDeviceAdminEnabled()
                     result.success(isEnabled)
                 }
+                "openAccessibilitySettings" -> {
+                    try {
+                        startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -262,10 +272,17 @@ class MainActivity: FlutterActivity() {
                     android.util.Log.w("MainActivity", "KeyguardManager approach failed: ${e.message}")
                 }
                 
-                // Method 5: Move to background (last resort)
-                moveTaskToBack(true)
-                android.util.Log.w("MainActivity", "All methods failed - moved task to background. Please enable device admin for reliable screen locking.")
-                
+                // Fallback: try AccessibilityService lock if enabled by user
+                try {
+                    if (LockAccessibilityService.tryLockScreen()) {
+                        android.util.Log.d("MainActivity", "Locked via AccessibilityService")
+                        isTurningOffScreen = false
+                        return true
+                    }
+                } catch (_: Exception) { }
+
+                // Do NOT move task to background, to avoid showing default launcher
+                android.util.Log.w("MainActivity", "All methods failed - unable to turn off screen. Enable device admin or Accessibility Service for reliable screen locking.")
                 isTurningOffScreen = false
                 false
             } else {
@@ -283,27 +300,24 @@ class MainActivity: FlutterActivity() {
         return try {
             val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
             if (!powerManager.isInteractive) {
-                // Wake up the screen
-                window.addFlags(
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                // Use only WakeLock to turn on screen - no window flags
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                    "MiniLauncher::WakeLock"
                 )
-                
-                // Wake up the device
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                    val wakeLock = powerManager.newWakeLock(
-                        PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                        "MiniLauncher::WakeLock"
-                    )
-                    wakeLock.acquire(100) // Hold for 100ms
-                    wakeLock.release()
+                try {
+                    wakeLock.acquire(1000) // Hold for 1 second
+                } finally {
+                    if (wakeLock.isHeld) {
+                        wakeLock.release()
+                    }
                 }
                 true
             } else {
                 true // Screen is already on
             }
         } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "turnOnScreen error: ${e.message}")
             false
         }
     }

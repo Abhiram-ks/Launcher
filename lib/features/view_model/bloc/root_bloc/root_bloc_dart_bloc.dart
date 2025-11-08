@@ -96,7 +96,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
       List<AppInfo> allApps = AppValues.allApps;
       if (allApps.isEmpty) {
         allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
-        AppValues.allApps = allApps; // Cache immediately
+        AppValues.allApps = allApps;
       }
       List<AppsModel> allAppsModels = allApps.map((app) => AppsModel(app: app)).toList();
       emit(SelectPriorityAppState(allApps: allAppsModels, selectedPackages: {}));

@@ -4,12 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
-import 'package:minilauncher/features/model/models/app_model.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
 import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
+import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
+import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_state.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AllAppsView extends StatefulWidget {
   final InitialAllAppsLoadedState state;
@@ -23,112 +25,17 @@ class AllAppsView extends StatefulWidget {
 class _AllAppsViewState extends State<AllAppsView> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  List<AppsModel> _filteredApps = [];
-  Map<String, List<AppsModel>> groupedApps = {};
-  List<String> availableLetters = [];
-  Map<String, double> letterPositions = {};
-
-  bool _showingAlphabetIndex = true;
-  String? _currentDragLetter;
-  bool isDraggingAlphabet = false;
   Timer? _dragEndTimer;
-  final Map<String, GlobalKey> _sectionKeys = {};
+  Map<String, GlobalKey> _sectionKeys = {};
 
   @override
   void initState() {
     super.initState();
-    _filteredApps = widget.state.allApps;
     _searchController.addListener(_onSearchChanged);
-    _groupAppsAlphabetically();
-  }
-
-  void _createSectionKeys() {
-    _sectionKeys.clear();
-    for (String letter in availableLetters) {
-      _sectionKeys[letter] = GlobalKey();
-    }
-  }
-
-  void _groupAppsAlphabetically() {
-    groupedApps.clear();
-    availableLetters.clear();
-
-    // Group apps by first letter with proper validation
-    for (var appModel in _filteredApps) {
-      final appName = appModel.app.name.trim();
-      if (appName.isEmpty) continue;
-
-      final firstChar = appName[0].toUpperCase();
-
-      // Only include letters A-Z, skip numbers and special characters
-      if (firstChar.codeUnitAt(0) < 65 || firstChar.codeUnitAt(0) > 90) {
-        const specialKey = '#';
-        if (!groupedApps.containsKey(specialKey)) {
-          groupedApps[specialKey] = [];
-          availableLetters.add(specialKey);
-        }
-        groupedApps[specialKey]!.add(appModel);
-      } else {
-        if (!groupedApps.containsKey(firstChar)) {
-          groupedApps[firstChar] = [];
-          availableLetters.add(firstChar);
-        }
-        groupedApps[firstChar]!.add(appModel);
-      }
-    }
-
-    // Sort letters (# will come first, then A-Z)
-    availableLetters.sort((a, b) {
-      if (a == '#') return -1;
-      if (b == '#') return 1;
-      return a.compareTo(b);
-    });
-
-    // Sort apps within each group
-    groupedApps.forEach((key, value) {
-      value.sort((a, b) => a.app.name.compareTo(b.app.name));
-    });
-
-    // Create section keys AFTER grouping
-    _createSectionKeys();
-  }
-
-  void _calculateLetterPositions() {
-    letterPositions.clear();
-    double currentPosition = 0;
-
-    for (String letter in availableLetters) {
-      letterPositions[letter] = currentPosition;
-
-      // Validate that the group actually exists and has apps
-      final appsInGroup = groupedApps[letter];
-      if (appsInGroup != null && appsInGroup.isNotEmpty) {
-        // Header height (40) + apps count * item height (72) + spacing
-        currentPosition += 40 + (appsInGroup.length * 72) + 8;
-      }
-    }
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredApps = widget.state.allApps;
-        _showingAlphabetIndex = true;
-      } else {
-        _filteredApps =
-            widget.state.allApps
-                .where(
-                  (appInfo) =>
-                      appInfo.app.name.toLowerCase().contains(query),
-                )
-                .toList();
-        _showingAlphabetIndex = false;
-      }
-      _groupAppsAlphabetically();
-      _calculateLetterPositions();
-    });
+    context.read<AllAppsCubit>().searchApps(_searchController.text);
   }
 
   @override
@@ -164,103 +71,129 @@ class _AllAppsViewState extends State<AllAppsView> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: WallpaperBackground(
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocBuilder<AllAppsCubit, AllAppsState>(
+      builder: (context, state) {
+        // Update section keys when available letters change
+        if (_sectionKeys.keys.toSet() != state.availableLetters.toSet()) {
+          _sectionKeys = {
+            for (String letter in state.availableLetters) letter: GlobalKey(),
+          };
+        }
+
+        return SafeArea(
+          child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: WallpaperBackground(
+              child: Stack(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 10,
-                      left: 20,
-                      right: 20,
-                    ),
-                    child: StreamBuilder<DateTime>(
-                      stream: Stream.periodic(
-                        const Duration(seconds: 1),
-                        (_) => DateTime.now(),
-                      ),
-                      initialData: DateTime.now(),
-                      builder: (context, snapshot) {
-                        final now = snapshot.data!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            Text(
-                              '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-
-                  /// Search Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: "Search apps...",
-                        hintStyle: const TextStyle(color: Colors.white54),
-                        filled: true,
-                        fillColor: Colors.white10,
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.white70,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 10,
+                          left: 20,
+                          right: 20,
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
+                        child: StreamBuilder<DateTime>(
+                          stream: Stream.periodic(
+                            const Duration(seconds: 1),
+                            (_) => DateTime.now(),
+                          ),
+                          initialData: DateTime.now(),
+                          builder: (context, snapshot) {
+                            final now = snapshot.data!;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
+                                  style: GoogleFonts.getFont(
+                                    AppTextStyleNotifier.instance.fontFamily,
+                                    textStyle: TextStyle(
+                                      color:
+                                          AppTextStyleNotifier
+                                              .instance
+                                              .textColor,
+                                      fontSize: 30,
+                                      fontWeight:
+                                          AppTextStyleNotifier
+                                              .instance
+                                              .fontWeight,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
+                                  style: GoogleFonts.getFont(
+                                    AppTextStyleNotifier.instance.fontFamily,
+                                    textStyle: TextStyle(
+                                      color: AppTextStyleNotifier.instance.textColor,
+                                      fontSize: 25,
+                                      fontWeight:  AppTextStyleNotifier.instance.fontWeight,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                    ),
+
+                      /// Search Bar
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: "Search apps...",
+                            hintStyle: GoogleFonts.getFont(
+                              AppTextStyleNotifier.instance.fontFamily,
+                              color: AppTextStyleNotifier.instance.textColor,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white10,
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: AppTextStyleNotifier.instance.textColor,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Expanded(
+                        child:
+                            state.showingAlphabetIndex
+                                ? _buildGroupedAppsList(state)
+                                : _buildFilteredAppsList(state),
+                      ),
+                    ],
                   ),
 
-                  Expanded(
-                    child:
-                        _showingAlphabetIndex
-                            ? _buildGroupedAppsList()
-                            : _buildFilteredAppsList(),
-                  ),
+                  // Alphabetical Index Sidebar
+                  if (state.showingAlphabetIndex) _buildAlphabetIndex(state),
                 ],
               ),
-
-              // Alphabetical Index Sidebar
-              if (_showingAlphabetIndex) _buildAlphabetIndex(),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildGroupedAppsList() {
+  Widget _buildGroupedAppsList(AllAppsState state) {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.only(right: 30),
-      itemCount: availableLetters.length,
+      itemCount: state.availableLetters.length,
       itemBuilder: (context, index) {
-        final letter = availableLetters[index];
-        final apps = groupedApps[letter]!;
+        final letter = state.availableLetters[index];
+        final apps = state.groupedApps[letter]!;
 
         return Column(
           key: _sectionKeys[letter],
@@ -271,8 +204,11 @@ class _AllAppsViewState extends State<AllAppsView> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Text(
                 letter,
-                style: TextStyle(
-                  color: AppPalette.whiteColor.withValues(alpha: .7),
+                style: GoogleFonts.getFont(
+                  AppTextStyleNotifier.instance.fontFamily,
+                  color: AppTextStyleNotifier.instance.textColor.withValues(
+                    alpha: .7,
+                  ),
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 1,
@@ -289,7 +225,9 @@ class _AllAppsViewState extends State<AllAppsView> {
                     valueListenable: AppFontSizeNotifier.instance,
                     builder: (context, ___, ____) {
                       return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        ),
                         leading: AppIconWidget(
                           iconData: app.icon,
                           size: 40,
@@ -297,10 +235,14 @@ class _AllAppsViewState extends State<AllAppsView> {
                         ),
                         title: Text(
                           app.name,
-                          style: TextStyle(
-                            color: AppTextStyleNotifier.instance.textColor,
-                            fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                            fontSize: AppFontSizeNotifier.instance.value,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight:
+                                  AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value,
+                            ),
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -324,11 +266,11 @@ class _AllAppsViewState extends State<AllAppsView> {
     );
   }
 
-  Widget _buildFilteredAppsList() {
+  Widget _buildFilteredAppsList(AllAppsState state) {
     return ListView.builder(
-      itemCount: _filteredApps.length,
+      itemCount: state.filteredApps.length,
       itemBuilder: (context, index) {
-        final app = _filteredApps[index].app;
+        final app = state.filteredApps[index].app;
         return ValueListenableBuilder(
           valueListenable: AppTextStyleNotifier.instance,
           builder: (context, _, __) {
@@ -347,10 +289,14 @@ class _AllAppsViewState extends State<AllAppsView> {
                       Expanded(
                         child: Text(
                           app.name,
-                          style: TextStyle(
-                            color: AppTextStyleNotifier.instance.textColor,
-                            fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                            fontSize: AppFontSizeNotifier.instance.value,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight:
+                                  AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value,
+                            ),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -371,7 +317,7 @@ class _AllAppsViewState extends State<AllAppsView> {
     );
   }
 
-  Widget _buildAlphabetIndex() {
+  Widget _buildAlphabetIndex(AllAppsState state) {
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final isKeyboardVisible = keyboardHeight > 0;
 
@@ -385,35 +331,41 @@ class _AllAppsViewState extends State<AllAppsView> {
       bottom: MediaQuery.of(context).size.height * 0.1,
       child: GestureDetector(
         onPanStart: (details) {
-          setState(() {
-            isDraggingAlphabet = true;
-          });
-          _handleAlphabetInteraction(details.localPosition, isDrag: true);
+          _handleAlphabetInteraction(
+            state,
+            details.localPosition,
+            isDrag: true,
+          );
           HapticFeedback.selectionClick();
         },
         onPanUpdate: (details) {
-          _handleAlphabetInteraction(details.localPosition, isDrag: true);
+          _handleAlphabetInteraction(
+            state,
+            details.localPosition,
+            isDrag: true,
+          );
         },
         onPanEnd: (details) {
           _dragEndTimer?.cancel();
           _dragEndTimer = Timer(const Duration(milliseconds: 500), () {
             if (mounted) {
-              setState(() {
-                _currentDragLetter = null;
-                isDraggingAlphabet = false;
-              });
+              context.read<AllAppsCubit>().stopDraggingAlphabet();
             }
           });
         },
         onTapDown: (details) {
           // Handle tap immediately for better responsiveness
-          _handleAlphabetInteraction(details.localPosition, isDrag: false);
+          _handleAlphabetInteraction(
+            state,
+            details.localPosition,
+            isDrag: false,
+          );
         },
         child: SizedBox(
           width: 24,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _buildAlphabetItems(),
+            children: _buildAlphabetItems(state),
           ),
         ),
       ),
@@ -421,7 +373,11 @@ class _AllAppsViewState extends State<AllAppsView> {
   }
 
   // **Unified Touch Handling Method**
-  void _handleAlphabetInteraction(Offset position, {required bool isDrag}) {
+  void _handleAlphabetInteraction(
+    AllAppsState state,
+    Offset position, {
+    required bool isDrag,
+  }) {
     final containerHeight = MediaQuery.of(context).size.height * 0.65;
 
     // Get all available letters in correct order (including #)
@@ -439,16 +395,15 @@ class _AllAppsViewState extends State<AllAppsView> {
     final tappedLetter = allLetters[tappedIndex];
 
     // Only proceed if this letter has apps
-    if (availableLetters.contains(tappedLetter) &&
-        groupedApps[tappedLetter] != null &&
-        groupedApps[tappedLetter]!.isNotEmpty) {
+    if (state.availableLetters.contains(tappedLetter) &&
+        state.groupedApps[tappedLetter] != null &&
+        state.groupedApps[tappedLetter]!.isNotEmpty) {
       // Update UI state
-      setState(() {
-        _currentDragLetter = tappedLetter;
-        if (!isDrag) {
-          isDraggingAlphabet = true;
-        }
-      });
+      if (isDrag) {
+        context.read<AllAppsCubit>().updateDragLetter(tappedLetter);
+      } else {
+        context.read<AllAppsCubit>().startDraggingAlphabet(tappedLetter);
+      }
 
       // Jump to letter
       _jumpToLetter(tappedLetter);
@@ -460,10 +415,7 @@ class _AllAppsViewState extends State<AllAppsView> {
       if (!isDrag) {
         Timer(const Duration(milliseconds: 800), () {
           if (mounted) {
-            setState(() {
-              _currentDragLetter = null;
-              isDraggingAlphabet = false;
-            });
+            context.read<AllAppsCubit>().stopDraggingAlphabet();
           }
         });
       }
@@ -471,15 +423,15 @@ class _AllAppsViewState extends State<AllAppsView> {
   }
 
   // **Build Alphabet Items Dynamically**
-  List<Widget> _buildAlphabetItems() {
+  List<Widget> _buildAlphabetItems(AllAppsState state) {
     final allLetters = [
       '#',
       ...List.generate(26, (i) => String.fromCharCode(65 + i)),
     ];
 
     return allLetters.map((letter) {
-      final isAvailable = availableLetters.contains(letter);
-      final isActive = _currentDragLetter == letter;
+      final isAvailable = state.availableLetters.contains(letter);
+      final isActive = state.currentDragLetter == letter;
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 150),
@@ -487,9 +439,12 @@ class _AllAppsViewState extends State<AllAppsView> {
           vertical: isActive ? 4 : 2,
           horizontal: isActive ? 6 : 2,
         ),
-        decoration:  isActive
+        decoration:
+            isActive
                 ? BoxDecoration(
-                  color: AppPalette.orengeColor.withValues(alpha: .6),
+                  color: AppTextStyleNotifier.instance.textColor.withValues(
+                    alpha: .6,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 )
                 : null,
@@ -500,7 +455,9 @@ class _AllAppsViewState extends State<AllAppsView> {
                 isAvailable
                     ? (isActive
                         ? AppPalette.whiteColor
-                        : AppPalette.whiteColor.withValues(alpha: 0.7))
+                        : AppTextStyleNotifier.instance.textColor.withValues(
+                          alpha: 0.7,
+                        ))
                     : AppPalette.whiteColor.withValues(alpha: .15),
             fontSize: isActive ? 14 : 10,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w300,
@@ -509,7 +466,6 @@ class _AllAppsViewState extends State<AllAppsView> {
       );
     }).toList();
   }
-
 
   void _jumpToLetter(String letter) {
     final sectionKey = _sectionKeys[letter];
@@ -530,13 +486,14 @@ class _AllAppsViewState extends State<AllAppsView> {
     }
 
     // Method 2: Backup using ListView index
-    final letterIndex = availableLetters.indexOf(letter);
+    final state = context.read<AllAppsCubit>().state;
+    final letterIndex = state.availableLetters.indexOf(letter);
     if (letterIndex != -1 && _scrollController.hasClients) {
       // Calculate approximate position
       double targetPosition = 0;
       for (int i = 0; i < letterIndex; i++) {
-        final prevLetter = availableLetters[i];
-        final appsCount = groupedApps[prevLetter]?.length ?? 0;
+        final prevLetter = state.availableLetters[i];
+        final appsCount = state.groupedApps[prevLetter]?.length ?? 0;
         targetPosition += 48 + (appsCount * 72) + 16; // Header + apps + spacing
       }
 
@@ -551,6 +508,3 @@ class _AllAppsViewState extends State<AllAppsView> {
     }
   }
 }
-
-
-

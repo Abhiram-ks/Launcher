@@ -1,6 +1,7 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:minilauncher/core/constant/app_icon_shape.dart';
 import 'package:minilauncher/core/service/app_icon_shape_notifier.dart';
+import 'package:minilauncher/core/constant/storage_keys.dart';
+import 'package:minilauncher/core/service/hive_storage.dart';
 
 class AppIconShapePrefs {
   AppIconShapePrefs._privateConstructor();
@@ -11,21 +12,20 @@ class AppIconShapePrefs {
     return instance;
   }
 
-  static const String _shapeKey = 'app_icon_shape';
+  static const String _shapeKey = StorageKeys.iconShape;
   static const AppIconShape _defaultShape = AppIconShape.rectangle;
 
   Future<void> setShape(AppIconShape shape) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_shapeKey, shape.name);
+    final prefs = HiveStorage.settingsBox;
+    await prefs.put(_shapeKey, shape.name);
     // Notify listeners immediately
     AppIconShapeNotifier.instance.updateShape(shape);
   }
 
   Future<AppIconShape> getShape() async {
-    final prefs = await SharedPreferences.getInstance();
-    final shapeName = prefs.getString(_shapeKey);
+    final prefs = HiveStorage.settingsBox;
+    final String? shapeName = prefs.get(_shapeKey) as String?;
     if (shapeName == null) {
-      AppIconShapeNotifier.instance.updateShape(_defaultShape);
       return _defaultShape;
     }
     
@@ -34,17 +34,15 @@ class AppIconShapePrefs {
         (shape) => shape.name == shapeName,
         orElse: () => _defaultShape,
       );
-      AppIconShapeNotifier.instance.updateShape(shape);
       return shape;
     } catch (e) {
-      AppIconShapeNotifier.instance.updateShape(_defaultShape);
       return _defaultShape;
     }
   }
 
   Future<void> clearShape() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_shapeKey);
+    final prefs = HiveStorage.settingsBox;
+    await prefs.delete(_shapeKey);
     AppIconShapeNotifier.instance.updateShape(_defaultShape);
   }
 }

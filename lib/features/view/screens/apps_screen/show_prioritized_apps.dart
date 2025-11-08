@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
@@ -9,6 +8,9 @@ import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
+import 'package:minilauncher/features/view_model/cubit/prioritized_scroll_cubit.dart';
+import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ShowPrioritizedMainApps extends StatefulWidget {
   final LoadPrioritizedAppsState state;
@@ -21,8 +23,6 @@ class ShowPrioritizedMainApps extends StatefulWidget {
 
 class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
   final ScrollController _scrollController = ScrollController();
-  bool _hasTriggered = false;
-  bool _isLoadingApps = false; // Add this flag
 
   @override
   void initState() {
@@ -32,7 +32,8 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
 
   Future<void> _scrollListenerV1() async {
     // Only trigger if we haven't already triggered and aren't currently loading
-    if (!_hasTriggered && !_isLoadingApps) {
+    final scrollState = context.read<PrioritizedScrollCubit>().state;
+    if (!scrollState.hasTriggered && !scrollState.isLoading) {
       // Check if we've scrolled to the trigger area (last item)
       if (_scrollController.hasClients) {
         final maxScroll = _scrollController.position.maxScrollExtent;
@@ -41,7 +42,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
         // Only trigger when we're near the bottom (trigger area)
         if (currentScroll >= maxScroll * 0.8) {
           // Adjust threshold as needed
-          _isLoadingApps = true;
+          context.read<PrioritizedScrollCubit>().markLoading();
           context.read<RootBloc>().add(LoadAppsEvent());
         }
       }
@@ -49,10 +50,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
   }
 
   void _resetState() {
-    setState(() {
-      _hasTriggered = false;
-      _isLoadingApps = false;
-    });
+    context.read<PrioritizedScrollCubit>().reset();
   }
 
   @override
@@ -100,21 +98,35 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                     children: [
                       Text(
                         '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
-                        style: const TextStyle(
-                          color: AppPalette.greyColor,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w300,
+                        style: GoogleFonts.getFont(
+                          AppTextStyleNotifier.instance.fontFamily,
+                          textStyle: TextStyle(
+                            color: AppTextStyleNotifier.instance.textColor,
+                            fontSize: 30,
+                            fontWeight:
+                                AppTextStyleNotifier.instance.fontWeight,
+                          ),
                         ),
                       ),
                       Text(
-                        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(
-                          color: AppPalette.whiteColor,
-                          fontSize: 25,
-                          fontWeight: FontWeight.w300,
+                        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
+                        style: GoogleFonts.getFont(
+                          AppTextStyleNotifier.instance.fontFamily,
+                          textStyle: TextStyle(
+                            color: AppTextStyleNotifier.instance.textColor,
+                            fontSize: 25,
+                            fontWeight:
+                                AppTextStyleNotifier.instance.fontWeight,
+                          ),
                         ),
                       ),
-                      Text('Hold to open Settings', style: TextStyle(color: AppPalette.greyColor,fontSize: 11),),
+                      Text(
+                        'Hold to open Settings',
+                        style: TextStyle(
+                          color: AppTextStyleNotifier.instance.textColor,
+                          fontSize: 11,
+                        ),
+                      ),
                       TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: 0, end: 1),
                         duration: const Duration(minutes: 15),
@@ -151,7 +163,9 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                         valueListenable: AppFontSizeNotifier.instance,
                         builder: (context, ___, ____) {
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                            ),
                             leading: AppIconWidget(
                               iconData: app.icon,
                               size: 40,
@@ -159,10 +173,15 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                             ),
                             title: Text(
                               app.name,
-                              style: TextStyle(
-                                color: AppTextStyleNotifier.instance.textColor,
-                                fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                                fontSize: AppFontSizeNotifier.instance.value,
+                              style: GoogleFonts.getFont(
+                                AppTextStyleNotifier.instance.fontFamily,
+                                textStyle: TextStyle(
+                                  color:
+                                      AppTextStyleNotifier.instance.textColor,
+                                  fontWeight:
+                                      AppTextStyleNotifier.instance.fontWeight,
+                                  fontSize: AppFontSizeNotifier.instance.value,
+                                ),
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -190,9 +209,11 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                             (current is RootShowPrioritizedBuildActionState),
                     listener: (BuildContext context, RootState state) async {
                       if (state is InitialAllAppsLoadedState &&
-                          !_hasTriggered) {
-                        _hasTriggered =
-                            true; // Set this immediately to prevent multiple navigations
+                          !context
+                              .read<PrioritizedScrollCubit>()
+                              .state
+                              .hasTriggered) {
+                        context.read<PrioritizedScrollCubit>().markTriggered();
 
                         context.read<RootBloc>().add(
                           ResetToShowPrioritizedEvent(),
@@ -211,7 +232,12 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                           PageRouteBuilder(
                             pageBuilder:
                                 (context, animation, secondaryAnimation) =>
-                                    AllAppsView(state: state),
+                                    BlocProvider(
+                                      create:
+                                          (context) =>
+                                              AllAppsCubit(state.allApps),
+                                      child: AllAppsView(state: state),
+                                    ),
                             transitionsBuilder: (
                               context,
                               animation,
@@ -239,6 +265,8 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                       if (state is PreparedAllAppsLoadedState) {
                         return SizedBox.shrink();
                       }
+                      final scrollState =
+                          context.watch<PrioritizedScrollCubit>().state;
                       return SizedBox(
                         height: screenHeight * 0.6,
                         child: Column(
@@ -256,7 +284,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                                         strokeWidth: 3,
                                       ),
                                     ),
-                                    ConstantWidgets.hight20(context), 
+                                    ConstantWidgets.hight20(context),
                                     Text(
                                       'Loading all apps...',
                                       style: TextStyle(
@@ -268,7 +296,8 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                                 )
                                 : AnimatedOpacity(
                                   opacity:
-                                      (_hasTriggered || _isLoadingApps)
+                                      (scrollState.hasTriggered ||
+                                              scrollState.isLoading)
                                           ? 0.3
                                           : 1.0,
                                   duration: const Duration(milliseconds: 300),
@@ -282,7 +311,11 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                                             offset: Offset(0, -10 * value),
                                             child: Icon(
                                               Icons.keyboard_arrow_up,
-                                              color: Colors.white30,
+                                              color:
+                                                  AppTextStyleNotifier
+                                                      .instance
+                                                      .textColor,
+
                                               size: 40,
                                             ),
                                           );
@@ -291,9 +324,17 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                                       ConstantWidgets.hight20(context),
                                       Text(
                                         'Scroll up to load all apps',
-                                        style: TextStyle(
-                                          color: Colors.white30,
-                                          fontSize: 16,
+                                        style: GoogleFonts.getFont(
+                                          AppTextStyleNotifier
+                                              .instance
+                                              .fontFamily,
+                                          textStyle: TextStyle(
+                                            color:
+                                                AppTextStyleNotifier
+                                                    .instance
+                                                    .textColor,
+                                            fontSize: 15,
+                                          ),
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
