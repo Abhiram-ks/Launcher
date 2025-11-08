@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/common/custom_appbar.dart';
-import 'package:minilauncher/core/common/custom_snackbar.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
@@ -41,7 +40,7 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
     ).animate(CurvedAnimation(
         parent: _slideController, curve: Curves.easeOutCubic));
 
-    availableWallpapers = List.generate(12, (index) => 'assets/wallpapers/${index + 1}.jpg');
+    availableWallpapers = List.generate(16, (index) => 'assets/wallpapers/${index + 1}.jpg');
 
     _fadeController.forward();
     _slideController.forward();
@@ -56,91 +55,77 @@ class _SelectWallpaperViewState extends State<SelectWallpaperView> with TickerPr
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<RootBloc, RootState>(
-      listener: (context, state) {
-        if (state is WallpaperLoadedState) {
-          CustomSnackBar.show(context,
-              message: 'Your new wallpaper is now active',
-              backgroundColor: AppPalette.greenColor,
-              textAlign: TextAlign.center);
-          Future.delayed(const Duration(milliseconds: 1500), () {
-            // ignore: use_build_context_synchronously
-            if (mounted) Navigator.pop(context);
-          });
-        }
-      },
-      child: Scaffold(
-        appBar: CustomAppBar(
-          title: "Wallpaper Gallery",
-          isTitle: true,
-          backgroundColor: AppPalette.blackColor,
-        ),
-        body: Stack(
-          children: [
-            BlocBuilder<WallpaperCubit, String>(
-              builder: (context, selectedWallpaper) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage(selectedWallpaper),
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        AppTextStyleNotifier.instance.textColor.withValues(alpha: .4),
-                        BlendMode.darken,
-                      ),
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: "Wallpaper Gallery",
+        isTitle: true,
+        backgroundColor: AppPalette.blackColor,
+      ),
+      body: Stack(
+        children: [
+          BlocBuilder<WallpaperCubit, String>(
+            builder: (context, selectedWallpaper) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(selectedWallpaper),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      AppTextStyleNotifier.instance.textColor.withValues(alpha: .4),
+                      BlendMode.darken,
                     ),
                   ),
-                );
-              },
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppPalette.blackColor.withValues(alpha: .7),
-                    AppPalette.blackColor.withValues(alpha: .3),
-                    AppPalette.blackColor.withValues(alpha: .8),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
                 ),
+              );
+            },
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppPalette.blackColor.withValues(alpha: .7),
+                  AppPalette.blackColor.withValues(alpha: .3),
+                  AppPalette.blackColor.withValues(alpha: .8),
+                ],
+                stops: const [0.0, 0.5, 1.0],
               ),
             ),
-
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: bodyPartOfSelectWallpaper(),
-              ),
+          ),
+    
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: bodyPartOfSelectWallpaper(),
             ),
-          ],
-        ),
-
-        floatingActionButton: BlocBuilder<WallpaperCubit, String>(
-          builder: (context, selectedWallpaper) {
-            final bloc = context.read<RootBloc>();
-            final currentWallpaper = bloc.currentWallpaper;
-            final isCurrentWallpaper = selectedWallpaper == currentWallpaper;
-
-            return AnimatedScale(
-              scale: isCurrentWallpaper ? 0.0 : 1.0,
-              duration: const Duration(microseconds: 200),
-              child: FloatingActionButton.extended(
-                backgroundColor: AppPalette.orengeColor,
-                icon: const Icon(CupertinoIcons.photo),
-                label: const Text(
-                  "Set as Wallpaper",
-                  style:
-                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                onPressed: isCurrentWallpaper ? null : _setWallpaper,
+          ),
+        ],
+      ),
+    
+      floatingActionButton: BlocBuilder<WallpaperCubit, String>(
+        builder: (context, selectedWallpaper) {
+          final bloc = context.read<RootBloc>();
+          final currentWallpaper = bloc.currentWallpaper;
+          final isCurrentWallpaper = selectedWallpaper == currentWallpaper;
+    
+          return AnimatedScale(
+            scale: isCurrentWallpaper ? 0.0 : 1.0,
+            duration: const Duration(microseconds: 200),
+            child: FloatingActionButton.extended(
+              backgroundColor: AppTextStyleNotifier.instance.textColor,
+              icon: const Icon(CupertinoIcons.photo),
+              label: const Text(
+                "Set as Wallpaper",
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
-            );
-          },
-        ),
+              onPressed: isCurrentWallpaper ? null : _setWallpaper,
+            ),
+          );
+        },
       ),
     );
   }

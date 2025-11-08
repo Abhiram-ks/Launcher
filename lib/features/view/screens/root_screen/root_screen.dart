@@ -121,7 +121,7 @@ Widget appsToSelectPriorityView(
   SelectPriorityAppState state,
   BuildContext context,
 ) {
-  const int maxSelectable = 13;
+  const int maxSelectable = 10;
 
   return Scaffold(
     body: Column(
@@ -180,7 +180,7 @@ Widget appsToSelectPriorityView(
                                           maxSelectable) {
                                     CustomSnackBar.show(
                                       context,
-                                      message: 'You can only select up to 13 apps',
+                                      message: 'You can only select up to 10 apps',
                                       textAlign: TextAlign.center,
                                     );
                                     return;
@@ -265,7 +265,7 @@ Widget appsToSelectPriorityView(
                   ? 'Save'
                   : state.selectedPackages.isEmpty
                   ? 'Select at least one'
-                  : 'Max 13 apps allowed',
+                  : 'Max 10 apps allowed',
               style: GoogleFonts.getFont(
                 AppTextStyleNotifier.instance.fontFamily,
                 textStyle: TextStyle(

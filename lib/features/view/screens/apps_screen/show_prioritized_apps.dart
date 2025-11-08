@@ -66,6 +66,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
     final state = widget.state;
 
     return GestureDetector(
+
       onLongPress: () {
         Navigator.push(
           context,
@@ -75,7 +76,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date and Time Header
+            ConstantWidgets.hight50(context),
           GestureDetector(
             onLongPress: () {
               Navigator.push(

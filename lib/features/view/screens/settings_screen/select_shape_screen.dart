@@ -8,7 +8,6 @@ import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view_model/cubit/shape_selection_cubit.dart';
 
 import '../../../../core/common/custom_appbar.dart';
-import '../../../../core/common/custom_snackbar.dart';
 import '../../../../core/service/app_text_style_notifier.dart';
 
 class SelectShapeScreen extends StatelessWidget {
@@ -28,16 +27,7 @@ class _SelectShapeScreenBody extends StatelessWidget {
 
   void _saveShape(BuildContext context, AppIconShape shape) async {
     await context.read<ShapeSelectionCubit>().setShape(shape);
-    if (context.mounted) {
-      CustomSnackBar.show(
-        context,
-        message: 'Shape changed to ${shape.displayName}',
-        backgroundColor: AppPalette.greenColor,
-        textColor: AppPalette.whiteColor,
-        durationSeconds: 1,
-        textAlign: TextAlign.center,
-      );
-    }
+
   }
 
   @override

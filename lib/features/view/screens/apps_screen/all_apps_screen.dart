@@ -82,122 +82,121 @@ class _AllAppsViewState extends State<AllAppsView> {
           };
         }
 
-        return SafeArea(
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            body: WallpaperBackground(
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 10,
-                          left: 20,
-                          right: 20,
+        return Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: WallpaperBackground(
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ConstantWidgets.hight50(context),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 10,
+                        left: 20,
+                        right: 20,
+                      ),
+                      child: StreamBuilder<DateTime>(
+                        stream: Stream.periodic(
+                          const Duration(seconds: 1),
+                          (_) => DateTime.now(),
                         ),
-                        child: StreamBuilder<DateTime>(
-                          stream: Stream.periodic(
-                            const Duration(seconds: 1),
-                            (_) => DateTime.now(),
-                          ),
-                          initialData: DateTime.now(),
-                          builder: (context, snapshot) {
-                            final now = snapshot.data!;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
-                                  style: GoogleFonts.getFont(
-                                    AppTextStyleNotifier.instance.fontFamily,
-                                    textStyle: TextStyle(
-                                      color:
-                                          AppTextStyleNotifier
-                                              .instance
-                                              .textColor,
-                                      fontSize: 30,
-                                      fontWeight:
-                                          AppTextStyleNotifier
-                                              .instance
-                                              .fontWeight,
-                                    ),
+                        initialData: DateTime.now(),
+                        builder: (context, snapshot) {
+                          final now = snapshot.data!;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color:
+                                        AppTextStyleNotifier
+                                            .instance
+                                            .textColor,
+                                    fontSize: 30,
+                                    fontWeight:
+                                        AppTextStyleNotifier
+                                            .instance
+                                            .fontWeight,
                                   ),
                                 ),
-                                Text(
-                                  '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
-                                  style: GoogleFonts.getFont(
-                                    AppTextStyleNotifier.instance.fontFamily,
-                                    textStyle: TextStyle(
-                                      color: AppTextStyleNotifier.instance.textColor,
-                                      fontSize: 25,
-                                      fontWeight:  AppTextStyleNotifier.instance.fontWeight,
-                                    ),
+                              ),
+                              Text(
+                                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color: AppTextStyleNotifier.instance.textColor,
+                                    fontSize: 25,
+                                    fontWeight:  AppTextStyleNotifier.instance.fontWeight,
                                   ),
                                 ),
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-
-                      /// Search Bar
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: "Search apps...",
-                            hintStyle: GoogleFonts.getFont(
-                              AppTextStyleNotifier.instance.fontFamily,
-                              color: AppTextStyleNotifier.instance.textColor,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white10,
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: AppTextStyleNotifier.instance.textColor,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      Expanded(
-                        child: BlocBuilder<LayoutCubit, LayoutState>(
-                          builder: (context, layoutState) {
-                            if (state.showingAlphabetIndex) {
-                              return layoutState.layoutType == AppLayoutType.list
-                                  ? _buildGroupedAppsList(state)
-                                  : _buildGroupedAppsGrid(state, layoutState.gridColumnCount);
-                            } else {
-                              return layoutState.layoutType == AppLayoutType.list
-                                  ? _buildFilteredAppsList(state)
-                                  : _buildFilteredAppsGrid(state, layoutState.gridColumnCount);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Alphabetical Index Sidebar (only show in list view)
-                  if (state.showingAlphabetIndex)
-                    BlocBuilder<LayoutCubit, LayoutState>(
-                      builder: (context, layoutState) {
-                        if (layoutState.layoutType == AppLayoutType.list) {
-                          return _buildAlphabetIndex(state);
-                        }
-                        return const SizedBox.shrink();
-                      },
                     ),
-                ],
-              ),
+        
+                    /// Search Bar
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Search apps...",
+                          hintStyle: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            color: AppTextStyleNotifier.instance.textColor,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white10,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: AppTextStyleNotifier.instance.textColor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+        
+                    Expanded(
+                      child: BlocBuilder<LayoutCubit, LayoutState>(
+                        builder: (context, layoutState) {
+                          if (state.showingAlphabetIndex) {
+                            return layoutState.layoutType == AppLayoutType.list
+                                ? _buildGroupedAppsList(state)
+                                : _buildGroupedAppsGrid(state, layoutState.gridColumnCount);
+                          } else {
+                            return layoutState.layoutType == AppLayoutType.list
+                                ? _buildFilteredAppsList(state)
+                                : _buildFilteredAppsGrid(state, layoutState.gridColumnCount);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+        
+                // Alphabetical Index Sidebar (only show in list view)
+                if (state.showingAlphabetIndex)
+                  BlocBuilder<LayoutCubit, LayoutState>(
+                    builder: (context, layoutState) {
+                      if (layoutState.layoutType == AppLayoutType.list) {
+                        return _buildAlphabetIndex(state);
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+              ],
             ),
           ),
         );
