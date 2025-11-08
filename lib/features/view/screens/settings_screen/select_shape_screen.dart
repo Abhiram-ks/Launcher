@@ -43,10 +43,8 @@ class _SelectShapeScreenBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
       appBar: CustomAppBar(
         title: 'Change Icon Shape',
-        backgroundColor: AppPalette.blackColor,
         isTitle: true,
       ),
       body: BlocBuilder<ShapeSelectionCubit, ShapeSelectionState>(

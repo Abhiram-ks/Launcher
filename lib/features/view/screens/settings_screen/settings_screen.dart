@@ -16,8 +16,7 @@ class SettingView extends StatefulWidget {
 class _SettingViewState extends State<SettingView> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: WallpaperBackground(
+    return  WallpaperBackground(
         child: Scaffold(
           appBar: CustomAppBar(
             title: "Settings",
@@ -27,7 +26,7 @@ class _SettingViewState extends State<SettingView> {
           ),
           body: bodyPartOfSettings(context: context),
         ),
-      ),
+   
     );
   }
 }

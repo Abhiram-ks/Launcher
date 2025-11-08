@@ -10,6 +10,7 @@ import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/cubit/layout_cubit.dart';
 
 import '../../../../core/themes/app_colors.dart';
+import '../../widget/settings_widget/settings_list_tile.dart';
 import 'select_text_style_screen.dart';
 
 class LayoutSettingsScreen extends StatelessWidget {
@@ -68,7 +69,7 @@ class _LayoutSettingsBody extends StatelessWidget {
       ]),
       builder: (context, _) {
         final textColor = AppTextStyleNotifier.instance.textColor;
-        
+
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -150,7 +151,7 @@ class _LayoutSettingsBody extends StatelessWidget {
       ]),
       builder: (context, _) {
         final textColor = AppTextStyleNotifier.instance.textColor;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -161,29 +162,32 @@ class _LayoutSettingsBody extends StatelessWidget {
               context: context,
               icon: CupertinoIcons.square_grid_2x2,
               title: 'Layout Type',
-              child:_buildLayoutOption(
-              context,
-              layoutType: AppLayoutType.list,
-              icon: CupertinoIcons.list_bullet,
-              title: 'List View',
-              description: 'Classic vertical list with alphabet navigation',
-              isSelected: state.layoutType == AppLayoutType.list,
-              onTap: () {
-                context.read<LayoutCubit>().setLayoutType(AppLayoutType.list);
-              },
-            ),
+              child: _buildLayoutOption(
+                context,
+                layoutType: AppLayoutType.list,
+                icon: CupertinoIcons.list_bullet,
+                title: 'List View',
+                description: 'Classic vertical list with alphabet navigation',
+                isSelected: state.layoutType == AppLayoutType.list,
+                onTap: () {
+                  context.read<LayoutCubit>().setLayoutType(AppLayoutType.list);
+                },
+              ),
             ),
             Padding(
-             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: _buildLayoutOption(
                 context,
                 layoutType: AppLayoutType.grid,
                 icon: CupertinoIcons.grid,
                 title: 'Grid View',
-                description: 'Compact grid layout with customizable columns',
+                description:
+                    'Compact grid layout with customizable columns',
                 isSelected: state.layoutType == AppLayoutType.grid,
                 onTap: () {
-                  context.read<LayoutCubit>().setLayoutType(AppLayoutType.grid);
+                  context.read<LayoutCubit>().setLayoutType(
+                    AppLayoutType.grid,
+                  );
                 },
               ),
             ),
@@ -206,21 +210,23 @@ class _LayoutSettingsBody extends StatelessWidget {
       animation: AppTextStyleNotifier.instance,
       builder: (context, _) {
         final textColor = AppTextStyleNotifier.instance.textColor;
-        
+
         return GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? textColor.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+              color:
+                  isSelected
+                      ? textColor.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected
-                    ? textColor.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.1),
+                color:
+                    isSelected
+                        ? textColor.withValues(alpha: 0.5)
+                        : Colors.white.withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -228,7 +234,8 @@ class _LayoutSettingsBody extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isSelected ? textColor : textColor.withValues(alpha: 0.6),
+                  color:
+                      isSelected ? textColor : textColor.withValues(alpha: 0.6),
                   size: 20,
                 ),
                 ConstantWidgets.width20(context),
@@ -282,7 +289,7 @@ class _LayoutSettingsBody extends StatelessWidget {
       ]),
       builder: (context, _) {
         final textColor = AppTextStyleNotifier.instance.textColor;
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -293,62 +300,83 @@ class _LayoutSettingsBody extends StatelessWidget {
               fontFamily: AppTextStyleNotifier.instance.fontFamily,
               icon: CupertinoIcons.slider_horizontal_3,
               title: 'Grid Columns',
-              child: 
-            Wrap(
-              spacing: 5,
-              runSpacing: 5,
-              children: [3, 4, 5, 6].map((columnCount) {
-                final isSelected = state.gridColumnCount == columnCount;
-                return GestureDetector(
-                  onTap: () {
-                    context.read<LayoutCubit>().setGridColumnCount(columnCount);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? textColor.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? textColor.withValues(alpha: 0.6)
-                            : Colors.white.withValues(alpha: 0.15),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '$columnCount',
-                          style: GoogleFonts.getFont(
-                            AppTextStyleNotifier.instance.fontFamily,
-                            textStyle: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 24,
+              child: Wrap(
+                spacing: 5,
+                runSpacing: 5,
+                children: [3, 4, 5, 6].map((columnCount) {
+                      final isSelected = state.gridColumnCount == columnCount;
+                      return GestureDetector(
+                        onTap: () {
+                          context.read<LayoutCubit>().setGridColumnCount(
+                            columnCount,
+                          );
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? textColor.withValues(alpha: 0.2)
+                                    : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isSelected
+                                      ? textColor.withValues(alpha: 0.6)
+                                      : Colors.white.withValues(alpha: 0.15),
+                              width: isSelected ? 2 : 1,
                             ),
                           ),
-                        ),
-                        Text(
-                          'cols',
-                          style: GoogleFonts.getFont(
-                            AppTextStyleNotifier.instance.fontFamily,
-                            textStyle: TextStyle(
-                              color: textColor.withValues(alpha: 0.7),
-                              fontSize: 11,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$columnCount',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color: textColor,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'cols',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color: textColor.withValues(alpha: 0.7),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      );
+                    }).toList(),
+              ),
+            ),
+            BlocBuilder<LayoutCubit, LayoutState>(
+              builder: (context, state) {
+                return SettingsListTile(
+                  title: 'Show Priority Apps in Grid',
+                  icon: CupertinoIcons.list_dash,
+                  trailing: Transform.scale(
+                    scale: 0.6,
+                    child: CupertinoSwitch(
+                      value: state.showPriorityInGrid,
+                      activeTrackColor: AppTextStyleNotifier.instance.textColor,
+                      onChanged: (_) {
+                        context.read<LayoutCubit>().toggleShowPriorityInGrid();
+                      },
                     ),
                   ),
                 );
-              }).toList(),
-            ),
+              },
             ),
           ],
         );

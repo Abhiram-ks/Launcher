@@ -13,6 +13,7 @@ import 'package:minilauncher/core/service/screen_control_service.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'package:minilauncher/features/view_model/cubit/prioritized_scroll_cubit.dart';
 import 'package:minilauncher/features/view_model/cubit/double_tap_cubit.dart';
+import 'package:minilauncher/features/view_model/cubit/theme_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class RootScreen extends StatefulWidget {
@@ -80,15 +81,13 @@ class _RootScreenState extends State<RootScreen> {
       builder: (context, isDoubleTapEnabled) {
         return PopScope(
           canPop: false,
-          child: SafeArea(
-            child: GestureDetector(
+          child:  GestureDetector(
               onDoubleTap: isDoubleTapEnabled ? _handleDoubleTap : null,
               child: Scaffold(
                 resizeToAvoidBottomInset: true,
                 body: WallpaperBackground(child: bodyPartOfRootScreen(context)),
               ),
             ),
-          ),
         );
       },
     );
@@ -125,12 +124,11 @@ Widget appsToSelectPriorityView(
   const int maxSelectable = 13;
 
   return Scaffold(
-    backgroundColor: Colors.transparent,
     body: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(top: 10, bottom: 15),
+          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.06, bottom: 15),
           child: Align(
             alignment: Alignment.center,
             child: Text(
@@ -172,57 +170,65 @@ Widget appsToSelectPriorityView(
                       return ValueListenableBuilder(
                         valueListenable: AppFontSizeNotifier.instance,
                         builder: (context, ___, ____) {
-                          return CheckboxListTile(
-                            value: isSelected,
-                            onChanged: (_) {
-                              if (!isSelected &&
-                                  state.selectedPackages.length >=
-                                      maxSelectable) {
-                                CustomSnackBar.show(
-                                  context,
-                                  message: 'You can only select up to 13 apps',
-                                  textAlign: TextAlign.center,
-                                );
-                                return;
-                              }
-                              context.read<RootBloc>().add(
-                                TogglePriorityAppEvent(packageName),
-                              );
-                            },
-                            title: Row(
-                              children: [
-                                AppIconWidget(
-                                  iconData: app.icon,
-                                  size: 40,
-                                  appName: app.name,
-                                ),
-                                ConstantWidgets.width20(context),
-                                Flexible(
-                                  child: Text(
-                                    app.name,
-                                    style: GoogleFonts.getFont(
-                                      AppTextStyleNotifier.instance.fontFamily,
-                                      textStyle: TextStyle(
-                                        color:
-                                            AppTextStyleNotifier
-                                                .instance
-                                                .textColor,
-                                        fontWeight:
-                                            AppTextStyleNotifier
-                                                .instance
-                                                .fontWeight,
-                                        fontSize:
-                                            AppFontSizeNotifier.instance.value,
+                          return BlocBuilder<ThemeCubit, ThemeState>(
+                            builder: (context, themeState) {
+                              return CheckboxListTile(
+                                value: isSelected,
+                                onChanged: (_) {
+                                  if (!isSelected &&
+                                      state.selectedPackages.length >=
+                                          maxSelectable) {
+                                    CustomSnackBar.show(
+                                      context,
+                                      message: 'You can only select up to 13 apps',
+                                      textAlign: TextAlign.center,
+                                    );
+                                    return;
+                                  }
+                                  context.read<RootBloc>().add(
+                                    TogglePriorityAppEvent(packageName),
+                                  );
+                                },
+                                title: Row(
+                                  children: [
+                                    AppIconWidget(
+                                      iconData: app.icon,
+                                      size: 40,
+                                      appName: app.name,
+                                    ),
+                                    ConstantWidgets.width20(context),
+                                    Flexible(
+                                      child: Text(
+                                        app.name,
+                                        style: GoogleFonts.getFont(
+                                          AppTextStyleNotifier.instance.fontFamily,
+                                          textStyle: TextStyle(
+                                            color:
+                                                AppTextStyleNotifier
+                                                    .instance
+                                                    .textColor,
+                                            fontWeight:
+                                                AppTextStyleNotifier
+                                                    .instance
+                                                    .fontWeight,
+                                            fontSize:
+                                                AppFontSizeNotifier.instance.value,
+                                          ),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            activeColor: AppPalette.orengeColor,
-                            checkColor: AppPalette.whiteColor,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                activeColor: themeState.isDarkMode 
+                                    ? AppPalette.whiteColor 
+                                    : AppPalette.blackColor,
+                                checkColor: themeState.isDarkMode 
+                                    ? AppPalette.blackColor 
+                                    : AppPalette.whiteColor,
+                              );
+                            },
                           );
                         },
                       );
@@ -252,7 +258,7 @@ Widget appsToSelectPriorityView(
           child: FloatingActionButton.extended(
             backgroundColor:
                 canSave
-                    ? AppPalette.orengeColor
+                    ? AppTextStyleNotifier.instance.textColor
                     : AppPalette.blackColor.withValues(alpha: 0.5),
             label: Text(
               canSave
@@ -263,7 +269,6 @@ Widget appsToSelectPriorityView(
               style: GoogleFonts.getFont(
                 AppTextStyleNotifier.instance.fontFamily,
                 textStyle: TextStyle(
-                  color: AppTextStyleNotifier.instance.textColor,
                   fontWeight: AppTextStyleNotifier.instance.fontWeight,
                   fontSize: AppFontSizeNotifier.instance.value,
                 ),

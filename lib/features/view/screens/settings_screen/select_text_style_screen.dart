@@ -40,10 +40,8 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: Colors.transparent,
           appBar: CustomAppBar(
-            title: 'Text Style',
-            backgroundColor: AppPalette.blackColor,
+            title: 'Style Settings',
             isTitle: true,
           ),
           body: SingleChildScrollView(
@@ -97,8 +95,7 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
                   title: 'Font Size',
                   child: _buildFontSizeSelector(context, ts),
                 ),
-                
-                const SizedBox(height: 20),
+                ConstantWidgets.hight20(context),
               ],
             ),
           ),
@@ -261,7 +258,7 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
               style: GoogleFonts.getFont(
                 family,
                 textStyle: TextStyle(
-                  color: isSelected ? ts.color : Colors.white70,
+                  color:  ts.color ,
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
@@ -299,7 +296,6 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
         child: DropdownButton<FontWeight>(
           value: ts.fontWeight,
           isExpanded: true,
-          dropdownColor: const Color(0xFF1A1A1A),
           style: TextStyle(color: ts.color, fontSize: 15),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           icon: Icon(CupertinoIcons.chevron_down, color: ts.color, size: 20),
@@ -356,7 +352,6 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
         child: DropdownButton<double>(
           value: ts.fontSize,
           isExpanded: true,
-          dropdownColor: const Color(0xFF1A1A1A),
           style: TextStyle(color: ts.color, fontSize: 15),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           icon: Icon(CupertinoIcons.chevron_down, color: ts.color, size: 20),

@@ -6,11 +6,13 @@ import 'package:minilauncher/core/service/hive_storage.dart';
 class LayoutState {
   final AppLayoutType layoutType;
   final int gridColumnCount;
+  final bool showPriorityInGrid;
   final bool isLoading;
 
   const LayoutState({
     required this.layoutType,
     required this.gridColumnCount,
+    required this.showPriorityInGrid,
     this.isLoading = false,
   });
 
@@ -18,6 +20,7 @@ class LayoutState {
     return const LayoutState(
       layoutType: AppLayoutType.list,
       gridColumnCount: 5,
+      showPriorityInGrid: false,
       isLoading: true,
     );
   }
@@ -25,11 +28,13 @@ class LayoutState {
   LayoutState copyWith({
     AppLayoutType? layoutType,
     int? gridColumnCount,
+    bool? showPriorityInGrid,
     bool? isLoading,
   }) {
     return LayoutState(
       layoutType: layoutType ?? this.layoutType,
       gridColumnCount: gridColumnCount ?? this.gridColumnCount,
+      showPriorityInGrid: showPriorityInGrid ?? this.showPriorityInGrid,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -52,9 +57,15 @@ class LayoutCubit extends Cubit<LayoutState> {
         defaultValue: 5,
       ) as int;
 
+      final showPriorityGrid = HiveStorage.settingsBox.get(
+        StorageKeys.showPriorityInGrid,
+        defaultValue: false,
+      ) as bool;
+
       emit(state.copyWith(
         layoutType: AppLayoutType.fromString(layoutTypeString),
         gridColumnCount: gridColumns,
+        showPriorityInGrid: showPriorityGrid,
         isLoading: false,
       ));
     } catch (e) {
@@ -80,6 +91,15 @@ class LayoutCubit extends Cubit<LayoutState> {
     emit(state.copyWith(gridColumnCount: columnCount));
   }
 
+  Future<void> toggleShowPriorityInGrid() async {
+    final newValue = !state.showPriorityInGrid;
+    await HiveStorage.settingsBox.put(
+      StorageKeys.showPriorityInGrid,
+      newValue,
+    );
+    emit(state.copyWith(showPriorityInGrid: newValue));
+  }
+
   // Static method to get current layout type without cubit
   static AppLayoutType getLayoutType() {
     final layoutTypeString = HiveStorage.settingsBox.get(
@@ -95,6 +115,14 @@ class LayoutCubit extends Cubit<LayoutState> {
       StorageKeys.gridColumnCount,
       defaultValue: 5,
     ) as int;
+  }
+
+  // Static method to get show priority in grid setting
+  static bool getShowPriorityInGrid() {
+    return HiveStorage.settingsBox.get(
+      StorageKeys.showPriorityInGrid,
+      defaultValue: false,
+    ) as bool;
   }
 }
 

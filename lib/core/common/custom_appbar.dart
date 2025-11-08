@@ -48,7 +48,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   softWrap: false,
                 )
               : null,
-          backgroundColor: backgroundColor ?? AppPalette.blackColor,
           iconTheme: IconThemeData(color: AppTextStyleNotifier.instance.textColor),
           elevation: 0,
           scrolledUnderElevation: 0,

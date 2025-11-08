@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
-import 'package:minilauncher/core/constant/app_layout_type.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view/screens/apps_screen/all_apps_screen.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/settings_screen.dart';
@@ -150,10 +149,11 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
           Expanded(
             child: BlocBuilder<LayoutCubit, LayoutState>(
               builder: (context, layoutState) {
-                if (layoutState.layoutType == AppLayoutType.list) {
-                  return _buildListView(state);
-                } else {
+                // Show priority apps in grid if toggle is ON, otherwise show in list
+                if (layoutState.showPriorityInGrid) {
                   return _buildGridView(state, layoutState.gridColumnCount);
+                } else {
+                  return _buildListView(state);
                 }
               },
             ),

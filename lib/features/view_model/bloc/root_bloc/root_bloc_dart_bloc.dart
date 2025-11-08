@@ -67,7 +67,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
       allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
-      AppValues.allApps = allApps; // Cache immediately
+      AppValues.allApps = allApps; 
     }
     emit(PreparedAllAppsLoadedState());
     emit(InitialAllAppsLoadedState(allApps: allApps.map((app) => AppsModel(app: app)).toList()));
@@ -84,7 +84,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
       allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
-      AppValues.allApps = allApps; // Cache immediately
+      AppValues.allApps = allApps; 
     }
     List<AppsModel> prioritizedApps = allApps.where((app) => prioritizedPackageNames.contains(app.packageName)).map((app) => AppsModel(app: app)).toList();
     emit(LoadPrioritizedAppsState(prioritizedApps: prioritizedApps));
@@ -128,7 +128,7 @@ class RootBloc extends Bloc<RootEvent, RootState> {
     List<AppInfo> allApps = AppValues.allApps;
     if (allApps.isEmpty) {
       allApps = await InstalledApps.getInstalledApps(excludeSystemApps: false, withIcon: true);
-      AppValues.allApps = allApps; // Cache immediately
+      AppValues.allApps = allApps;
     }
     List<AppsModel> allAppsModels = allApps.map((app) => AppsModel(app: app)).toList();
     emit(SelectPriorityAppState(allApps: allAppsModels, selectedPackages: prioritizedPackageNames.toSet()));

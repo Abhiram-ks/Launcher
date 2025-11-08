@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,21 +16,12 @@ import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'features/view_model/cubit/double_tap_cubit.dart';
 import 'features/view_model/cubit/layout_cubit.dart';
+import 'features/view_model/cubit/theme_cubit.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-    await HiveStorage.init();
-  
-  // Set system UI overlay style for better appearance
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.black,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+  await HiveStorage.init();
 
   // Preload settings values
   final preloadedShape = await AppIconShapePrefs().getShape();
@@ -57,12 +50,21 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => RootBloc()..add(RootInitialEvent())),
         BlocProvider(create: (_) => DoubleTapCubit()),
         BlocProvider(create: (_) => LayoutCubit()),
+        BlocProvider(create: (_) => ThemeCubit()),
       ],
-      child: MaterialApp(
-        title: 'Mini Launcher',
-        theme: AppTheme.darkTheme,
-        debugShowCheckedModeBanner: false,
-        home: const RootScreen(),
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          print('themeState: ${themeState.isDarkMode}');
+          log('themeState: ${themeState.isDarkMode}');
+          log('themeState: ${themeState.isDarkMode}');
+          log('themeState: ${themeState.isDarkMode}');
+          return MaterialApp(
+            title: 'Mini Launcher',
+            theme: themeState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+            debugShowCheckedModeBanner: false,
+            home: const RootScreen(),
+          );
+        },
       ),
     );
   }

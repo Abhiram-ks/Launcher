@@ -41,14 +41,16 @@ class AppTheme {
     scaffoldBackgroundColor: AppPalette.whiteColor,
     fontFamily: GoogleFonts.poppins().fontFamily,
 
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppPalette.whiteColor,
-      selectedItemColor: AppPalette.blueColor,
+      selectedItemColor: AppPalette.primaryColor,
       unselectedItemColor: AppPalette.greyColor,
     ),
 
     appBarTheme: const AppBarTheme(
       backgroundColor: AppPalette.whiteColor,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
       iconTheme: IconThemeData(color: AppPalette.blackColor),
       titleTextStyle: TextStyle(
         color: AppPalette.blackColor,
