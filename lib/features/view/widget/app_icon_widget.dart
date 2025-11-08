@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:minilauncher/core/constant/app_icon_shape.dart';
 import 'package:minilauncher/core/service/app_icon_shape_notifier.dart';
 
+import '../../../core/service/app_text_style_notifier.dart';
+
 class AppIconWidget extends StatelessWidget {
   final Uint8List? iconData;
   final double size;
@@ -46,7 +48,9 @@ class AppIconWidget extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: borderRadius,
-      child: iconWidget,
+      child: ColoredBox(
+        color:  AppTextStyleNotifier.instance.textColor.withValues(alpha: 0.1),
+        child: iconWidget),
     );
   }
 

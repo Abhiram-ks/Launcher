@@ -1,5 +1,4 @@
 package com.boeko.minilauncher
-
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine

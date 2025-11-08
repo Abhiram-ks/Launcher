@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
+import 'package:minilauncher/core/constant/app_layout_type.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
 import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
@@ -11,6 +12,7 @@ import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_state.dart';
+import 'package:minilauncher/features/view_model/cubit/layout_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AllAppsView extends StatefulWidget {
@@ -167,16 +169,33 @@ class _AllAppsViewState extends State<AllAppsView> {
                       ),
 
                       Expanded(
-                        child:
-                            state.showingAlphabetIndex
-                                ? _buildGroupedAppsList(state)
-                                : _buildFilteredAppsList(state),
+                        child: BlocBuilder<LayoutCubit, LayoutState>(
+                          builder: (context, layoutState) {
+                            if (state.showingAlphabetIndex) {
+                              return layoutState.layoutType == AppLayoutType.list
+                                  ? _buildGroupedAppsList(state)
+                                  : _buildGroupedAppsGrid(state, layoutState.gridColumnCount);
+                            } else {
+                              return layoutState.layoutType == AppLayoutType.list
+                                  ? _buildFilteredAppsList(state)
+                                  : _buildFilteredAppsGrid(state, layoutState.gridColumnCount);
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
 
-                  // Alphabetical Index Sidebar
-                  if (state.showingAlphabetIndex) _buildAlphabetIndex(state),
+                  // Alphabetical Index Sidebar (only show in list view)
+                  if (state.showingAlphabetIndex)
+                    BlocBuilder<LayoutCubit, LayoutState>(
+                      builder: (context, layoutState) {
+                        if (layoutState.layoutType == AppLayoutType.list) {
+                          return _buildAlphabetIndex(state);
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                 ],
               ),
             ),
@@ -506,5 +525,103 @@ class _AllAppsViewState extends State<AllAppsView> {
         curve: Curves.easeOutCubic,
       );
     }
+  }
+
+  // Grid View for Grouped Apps
+  Widget _buildGroupedAppsGrid(AllAppsState state, int columnCount) {
+    return GridView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columnCount,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: state.availableLetters.fold<int>(
+        0,
+        (sum, letter) => sum + (state.groupedApps[letter]?.length ?? 0),
+      ),
+      itemBuilder: (context, index) {
+        // Find the app at this index
+        int currentIndex = 0;
+        for (final letter in state.availableLetters) {
+          final apps = state.groupedApps[letter] ?? [];
+          if (currentIndex + apps.length > index) {
+            final appIndex = index - currentIndex;
+            final appModel = apps[appIndex];
+            return _buildGridAppItem(appModel.app);
+          }
+          currentIndex += apps.length;
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  // Grid View for Filtered Apps
+  Widget _buildFilteredAppsGrid(AllAppsState state, int columnCount) {
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columnCount,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: state.filteredApps.length,
+      itemBuilder: (context, index) {
+        final app = state.filteredApps[index].app;
+        return _buildGridAppItem(app);
+      },
+    );
+  }
+
+  // Grid Item Widget
+  Widget _buildGridAppItem(dynamic app) {
+    return ValueListenableBuilder(
+      valueListenable: AppTextStyleNotifier.instance,
+      builder: (context, _, __) {
+        return ValueListenableBuilder(
+          valueListenable: AppFontSizeNotifier.instance,
+          builder: (context, ___, ____) {
+            return InkWell(
+              onTap: () {
+                context.read<RootBloc>().add(
+                  LaunchAppEvent(packageName: app.packageName),
+                );
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIconWidget(
+                    iconData: app.icon,
+                    size: 42,
+                    appName: app.name,
+                  ),
+                  Flexible(
+                    child: Text(
+                      app.name,
+                      style: GoogleFonts.getFont(
+                        AppTextStyleNotifier.instance.fontFamily,
+                        textStyle: TextStyle(
+                          color: AppTextStyleNotifier.instance.textColor,
+                          fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                          fontSize: AppFontSizeNotifier.instance.value * 0.75,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

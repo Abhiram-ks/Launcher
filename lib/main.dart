@@ -13,6 +13,7 @@ import 'features/model/data/app_icon_shape_prefs.dart';
 import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'features/view_model/cubit/double_tap_cubit.dart';
+import 'features/view_model/cubit/layout_cubit.dart';
 
 
 void main() async {
@@ -55,6 +56,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => RootBloc()..add(RootInitialEvent())),
         BlocProvider(create: (_) => DoubleTapCubit()),
+        BlocProvider(create: (_) => LayoutCubit()),
       ],
       child: MaterialApp(
         title: 'Mini Launcher',

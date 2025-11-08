@@ -55,36 +55,44 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
                 _buildPreviewSection(context, ts),
                 ConstantWidgets.hight10(context),
                 // Text Color Section
-                _buildSection(
+                buildSection(
                   context: context,
-                  ts: ts,
+                  color: ts.color,
+                  fontWeight: ts.fontWeight,
+                  fontFamily: ts.fontFamily,
                   icon: CupertinoIcons.paintbrush_fill,
-                  title: 'Text Color',
+                  title: 'Color Palette',
                   child: _buildColorPicker(context, ts),
                 ),
                 
                 // Font Family Section
-                _buildSection(
+                buildSection(
                   context: context,
-                  ts: ts,
+                  color: ts.color,
+                  fontWeight: ts.fontWeight,
+                  fontFamily: ts.fontFamily,
                   icon: CupertinoIcons.textformat,
                   title: 'Font Family',
                   child: _buildFontFamilySelector(context, ts),
                 ),
                 
                 // Font Weight Section
-                _buildSection(
+                buildSection(
                   context: context,
-                  ts: ts,
+                  color: ts.color,
+                  fontWeight: ts.fontWeight,
+                  fontFamily: ts.fontFamily,
                   icon: CupertinoIcons.bold,
                   title: 'Font Weight',
                   child: _buildFontWeightSelector(context, ts),
                 ),
                 
                 // Font Size Section
-                _buildSection(
+                buildSection(
                   context: context,
-                  ts: ts,
+                  color: ts.color,
+                  fontWeight: ts.fontWeight,
+                  fontFamily: ts.fontFamily,
                   icon: CupertinoIcons.textformat_size,
                   title: 'Font Size',
                   child: _buildFontSizeSelector(context, ts),
@@ -100,48 +108,6 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
   }
 
   // Section Builder
-  static Widget _buildSection({
-    required BuildContext context,
-    required TextStyleState ts,
-    required IconData icon,
-    required String title,
-    required Widget child,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ts.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: ts.color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.getFont(
-                  ts.fontFamily,
-                  textStyle: TextStyle(
-                    color: ts.color,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          ConstantWidgets.hight10(context),
-          child,
-        ],
-      ),
-    );
-  }
 
   // Preview Section
   static Widget _buildPreviewSection(BuildContext context, TextStyleState ts) {
@@ -430,3 +396,49 @@ class _SelectTextStyleScreenBody extends StatelessWidget {
     );
   }
 }
+
+
+   Widget buildSection({
+    required BuildContext context,
+    required Color color,
+    required FontWeight fontWeight,
+    required String fontFamily,
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              ConstantWidgets.width10(context),
+              Text(
+                title,
+                style: GoogleFonts.getFont(
+                  fontFamily,
+                  textStyle: TextStyle(
+                    color: color,
+                    fontWeight: fontWeight,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          ConstantWidgets.hight10(context),
+          child,
+        ],
+      ),
+    );
+  }
