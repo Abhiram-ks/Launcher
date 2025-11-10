@@ -2,10 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:installed_apps/app_info.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'package:minilauncher/core/common/custom_appbar.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
+import 'package:minilauncher/features/model/data/priority_apps_localdb.dart';
 import 'package:minilauncher/features/view/widget/charts/weekly_bar_chart_widget.dart';
 import 'package:minilauncher/features/view/widget/charts/weekly_line_chart_widget.dart';
 import 'package:minilauncher/features/view/widget/date_picker_dialog_widget.dart';
@@ -359,63 +362,142 @@ class ScreenTimeActivity extends StatelessWidget {
   }
 
   Widget _buildAppUsageList(BuildContext context) {
-    final apps = [
-      const _AppUsageData(
-        appName: 'Instagram',
-        packageName: 'com.instagram.android',
-        usageTime: '3 hrs, 20 mins',
-        iconColor: Colors.pink,
-        icon: Icons.camera_alt,
-      ),
-      const _AppUsageData(
-        appName: 'WhatsApp',
-        packageName: 'com.whatsapp',
-        usageTime: '1 hr, 37 mins',
-        iconColor: Colors.green,
-        icon: Icons.chat,
-      ),
-      const _AppUsageData(
-        appName: 'YouTube',
-        packageName: 'com.google.android.youtube',
-        usageTime: '1 hr, 23 mins',
-        iconColor: Colors.red,
-        icon: Icons.play_arrow,
-      ),
-      const _AppUsageData(
-        appName: 'Chrome',
-        packageName: 'com.android.chrome',
-        usageTime: '45 mins',
-        iconColor: Colors.blue,
-        icon: Icons.language,
-      ),
-      const _AppUsageData(
-        appName: 'Gmail',
-        packageName: 'com.google.android.gm',
-        usageTime: '30 mins',
-        iconColor: Colors.red,
-        icon: Icons.email,
-      ),
-    ];
+    return FutureBuilder<List<String>>(
+      future: PriorityAppsPrefs().getPriorityApps(),
+      builder: (context, prioritySnapshot) {
+        if (!prioritySnapshot.hasData) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(
+                color: AppPalette.blueColor,
+              ),
+            ),
+          );
+        }
 
-    return ValueListenableBuilder(
-      valueListenable: AppTextStyleNotifier.instance,
-      builder: (context, _, __) {
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: apps.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final app = apps[index];
-            return _buildAppUsageItem(context, app);
+        final priorityApps = prioritySnapshot.data!;
+
+        if (priorityApps.isEmpty) {
+          return _buildEmptyState(context);
+        }
+
+        // Load all installed apps to get real app info
+        return FutureBuilder<List<AppInfo>>(
+          future: InstalledApps.getInstalledApps(
+            excludeSystemApps: false,
+            withIcon: true,
+          ),
+          builder: (context, appsSnapshot) {
+            if (!appsSnapshot.hasData) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(
+                    color: AppPalette.blueColor,
+                  ),
+                ),
+              );
+            }
+
+            final installedApps = appsSnapshot.data!;
+
+            // Debug logging
+            debugPrint('📱 Priority apps from storage: ${priorityApps.length} apps');
+            debugPrint('📦 Priority packages: $priorityApps');
+            debugPrint('📲 Total installed apps loaded: ${installedApps.length}');
+
+            // Filter to show only priority apps
+            final priorityAppInfos = installedApps
+                .where((app) => priorityApps.contains(app.packageName))
+                .toList();
+
+            debugPrint('✅ Filtered priority app infos: ${priorityAppInfos.length} apps');
+            debugPrint('📋 Showing apps: ${priorityAppInfos.map((a) => a.name).join(", ")}');
+
+            if (priorityAppInfos.isEmpty) {
+              return _buildEmptyState(context);
+            }
+
+            return ValueListenableBuilder(
+              valueListenable: AppTextStyleNotifier.instance,
+              builder: (context, _, __) {
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: priorityAppInfos.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final app = priorityAppInfos[index];
+                    return _buildAppUsageItemDynamic(context, app);
+                  },
+                );
+              },
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildAppUsageItem(BuildContext context, _AppUsageData app) {
+  Widget _buildEmptyState(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: AppTextStyleNotifier.instance,
+      builder: (context, _, __) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppPalette.greyColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppPalette.greyColor.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.app_settings_alt,
+                size: 64,
+                color: AppTextStyleNotifier.instance.textColor
+                    .withValues(alpha: 0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No Apps Added',
+                style: GoogleFonts.getFont(
+                  AppTextStyleNotifier.instance.fontFamily,
+                  textStyle: TextStyle(
+                    color: AppTextStyleNotifier.instance.textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add apps to your home screen to see their screen time here',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.getFont(
+                  AppTextStyleNotifier.instance.fontFamily,
+                  textStyle: TextStyle(
+                    color: AppTextStyleNotifier.instance.textColor
+                        .withValues(alpha: 0.6),
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppUsageItemDynamic(BuildContext context, AppInfo app) {
     return ValueListenableBuilder(
       valueListenable: AppTextStyleNotifier.instance,
       builder: (context, _, __) {
@@ -431,15 +513,20 @@ class ScreenTimeActivity extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // App Icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: app.iconColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(app.icon, color: app.iconColor, size: 28),
+              // Real App Icon
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: app.icon != null
+                    ? Image.memory(
+                        app.icon!,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildDefaultIcon();
+                        },
+                      )
+                    : _buildDefaultIcon(),
               ),
               const SizedBox(width: 16),
 
@@ -449,7 +536,7 @@ class ScreenTimeActivity extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      app.appName,
+                      app.name,
                       style: GoogleFonts.getFont(
                         AppTextStyleNotifier.instance.fontFamily,
                         textStyle: TextStyle(
@@ -458,10 +545,12 @@ class ScreenTimeActivity extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      app.usageTime,
+                      '3 hrs, 20 mins', // Static for now
                       style: GoogleFonts.getFont(
                         AppTextStyleNotifier.instance.fontFamily,
                         textStyle: TextStyle(
@@ -489,21 +578,20 @@ class ScreenTimeActivity extends StatelessWidget {
       },
     );
   }
-}
 
-// Static Data Model
-class _AppUsageData {
-  final String appName;
-  final String packageName;
-  final String usageTime;
-  final Color iconColor;
-  final IconData icon;
-
-  const _AppUsageData({
-    required this.appName,
-    required this.packageName,
-    required this.usageTime,
-    required this.iconColor,
-    required this.icon,
-  });
+  Widget _buildDefaultIcon() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppPalette.greyColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.apps,
+        color: AppPalette.whiteColor,
+        size: 28,
+      ),
+    );
+  }
 }
