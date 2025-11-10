@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+
 import 'package:minilauncher/core/constant/storage_keys.dart';
 
 class HiveStorage {

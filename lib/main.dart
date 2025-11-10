@@ -7,9 +7,13 @@ import 'package:minilauncher/features/model/data/app_text_style_prefs.dart';
 import 'core/service/app_font_size_notifier.dart';
 import 'core/service/app_icon_shape_notifier.dart';
 import 'core/service/app_text_style_notifier.dart';
+import 'core/service/app_usage_service.dart';
 import 'core/service/hive_storage.dart';
+import 'core/service/usage_dialog_handler.dart';
+import 'core/service/usage_notification_service.dart';
 import 'core/themes/app_themes.dart';
 import 'features/model/data/app_icon_shape_prefs.dart';
+import 'features/model/data/app_usage_prefs.dart';
 import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'features/view_model/cubit/double_tap_cubit.dart';
@@ -18,7 +22,27 @@ import 'features/view_model/cubit/double_tap_cubit.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
     await HiveStorage.init();
+    await UsageNotificationService.init();
   
+  // Check if monitoring was enabled before and restart if needed
+  try {
+    final wasMonitoring = await AppUsagePrefs().isMonitoringEnabled();
+    if (wasMonitoring) {
+      final hasPermission = await AppUsageService.hasUsagePermission();
+      if (hasPermission) {
+        final timeLimit = await AppUsagePrefs().getTimeLimit();
+        await AppUsageService.startMonitoring(timeLimit);
+      }
+    }
+    
+    // Reset daily notifications if new day
+    final shouldReset = await AppUsagePrefs().shouldResetDaily();
+    if (shouldReset) {
+      await AppUsagePrefs().clearNotifiedApps();
+    }
+  } catch (e) {
+    debugPrint('Error initializing usage monitoring: $e');
+  }
   // Set system UI overlay style for better appearance
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -63,5 +87,38 @@ class MyApp extends StatelessWidget {
         home: const RootScreen(),
       ),
     );
+  }
+}
+class RootScreenWrapper extends StatefulWidget {
+  const RootScreenWrapper({super.key});
+
+  @override
+  State<RootScreenWrapper> createState() => _RootScreenWrapperState();
+}
+
+class _RootScreenWrapperState extends State<RootScreenWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize dialog handler after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        UsageDialogHandler.initialize(context);
+        debugPrint('✅ Usage dialog handler initialized');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    UsageDialogHandler.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Update context for dialog handler on rebuild
+    UsageDialogHandler.updateContext(context);
+    return const RootScreen();
   }
 }

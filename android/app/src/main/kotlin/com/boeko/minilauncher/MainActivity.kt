@@ -13,15 +13,26 @@ import android.view.WindowManager
 import android.app.KeyguardManager
 import android.content.Context
 import android.app.admin.DevicePolicyManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.os.Build
 
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "launcher_service"
     private val SCREEN_CONTROL_CHANNEL = "screen_control_service"
+    private val USAGE_CHANNEL = "app_usage_service"
     private var isTurningOffScreen = false
     private var lastTurnOffTime = 0L
     
+    companion object {
+        private const val NOTIFICATION_PERMISSION_CODE = 1001
+    }
+
+    // ADD: MethodChannel for dialog communication
+    private var dialogChannel: MethodChannel? = null
+
     private fun getDeviceAdminComponent(): ComponentName {
         return ComponentName(this, LauncherDeviceAdminReceiver::class.java)
     }
@@ -63,12 +74,42 @@ class MainActivity: FlutterActivity() {
         )
         
         handleLauncherIntent()
+
+        // ADD: Handle notification tap to show dialog
+        handleUsageNotification(intent)        
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleLauncherIntent()
+
+        // ADD: Handle notification tap when app is already open
+        handleUsageNotification(intent)
+    }
+
+    // ADD: New method to handle usage notification taps
+    private fun handleUsageNotification(intent: Intent?) {
+        if (intent == null) return
+        
+        val showDialog = intent.getBooleanExtra("show_usage_dialog", false)
+        if (showDialog) {
+            val appName = intent.getStringExtra("app_name") ?: return
+            val usageMinutes = intent.getIntExtra("usage_minutes", 0)
+            
+            // Wait a bit for Flutter engine to be ready
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                dialogChannel?.invokeMethod("showUsageDialog", mapOf(
+                    "appName" to appName,
+                    "minutes" to usageMinutes
+                ))
+            }, 500)
+            
+            // Clear the intent extras to prevent re-showing on rotation
+            intent.removeExtra("show_usage_dialog")
+            intent.removeExtra("app_name")
+            intent.removeExtra("usage_minutes")
+        }
     }
 
     private fun handleLauncherIntent() {
@@ -105,6 +146,9 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // ADD: Setup dialog channel
+        dialogChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "usage_dialog_channel")
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -154,6 +198,91 @@ class MainActivity: FlutterActivity() {
                 }
                 else -> result.notImplemented()
             }
+        }
+        
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, USAGE_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "requestUsagePermission" -> {
+                    UsageStatsHelper.requestUsagePermission(this)
+                    result.success(null)
+                }
+                "hasUsagePermission" -> {
+                    val hasPermission = UsageStatsHelper.hasUsagePermission(this)
+                    result.success(hasPermission)
+                }
+                "getAppUsage" -> {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        val startTime = call.argument<Long>("startTime") ?: 0L
+                        val endTime = call.argument<Long>("endTime") ?: System.currentTimeMillis()
+                        val usageData = UsageStatsHelper.getAppUsage(this, startTime, endTime)
+                        result.success(usageData)
+                    } else {
+                        result.success(emptyList<Map<String, Any>>())
+                    }
+                }
+                "startMonitoring" -> {
+                    val timeLimitMinutes = call.argument<Int>("timeLimitMinutes") ?: 15
+                    val serviceIntent = Intent(this, UsageMonitorService::class.java)
+                    serviceIntent.putExtra(UsageMonitorService.EXTRA_TIME_LIMIT, timeLimitMinutes)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        startForegroundService(serviceIntent)
+                    } else {
+                        startService(serviceIntent)
+                    }
+                    result.success(null)
+                }
+                "stopMonitoring" -> {
+                    val serviceIntent = Intent(this, UsageMonitorService::class.java)
+                    stopService(serviceIntent)
+                    result.success(null)
+                }
+                "getCurrentForegroundApp" -> {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        val foregroundApp = UsageStatsHelper.getCurrentForegroundApp(this)
+                        result.success(foregroundApp)
+                    } else {
+                        result.success(null)
+                    }
+                }
+                "isMonitoringRunning" -> {
+                    val isRunning = UsageMonitorService.isServiceRunning()
+                    result.success(isRunning)
+                }
+                "resetNotifications" -> {
+                    UsageMonitorService.resetNotifications(this)
+                    result.success(null)
+                }
+                "hasNotificationPermission" -> {
+                    val hasPermission = hasNotificationPermission()
+                    result.success(hasPermission)
+                }
+                "requestNotificationPermission" -> {
+                    requestNotificationPermission()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+    
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Permission not needed for Android < 13
+        }
+    }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                NOTIFICATION_PERMISSION_CODE
+            )
         }
     }
 

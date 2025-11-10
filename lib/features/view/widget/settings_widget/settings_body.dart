@@ -12,6 +12,7 @@ import 'package:minilauncher/features/view/screens/settings_screen/select_text_s
 import '../../../view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
 import '../../../view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import '../../../view_model/cubit/double_tap_cubit.dart';
+import '../../screens/settings_screen/screen_timer_screen.dart';
 import 'settings_list_tile.dart';
 
 Widget bodyPartOfSettings({required BuildContext context}) {
@@ -75,6 +76,18 @@ Widget bodyPartOfSettings({required BuildContext context}) {
             context,
             MaterialPageRoute(
               builder: (context) => const SelectTextStyleScreen(),
+            ),
+          );
+        },
+      ),
+          SettingsListTile(
+        title: 'Screen Timer',
+        icon: CupertinoIcons.time,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ScreenTimerScreen(),
             ),
           );
         },
