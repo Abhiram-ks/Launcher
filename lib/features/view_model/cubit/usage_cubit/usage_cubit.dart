@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/service/app_usage_service.dart';
 import 'package:minilauncher/features/model/data/app_usage_prefs.dart';
+import 'package:minilauncher/features/model/data/priority_apps_localdb.dart';
 import 'usage_state.dart';
 
 class UsageCubit extends Cubit<UsageState> {
@@ -59,8 +60,14 @@ class UsageCubit extends Cubit<UsageState> {
       // Save time limit
       await AppUsagePrefs().setTimeLimit(timeLimitMinutes);
       
-      // Start monitoring service
-      await AppUsageService.startMonitoring(timeLimitMinutes);
+      // Load priority apps
+      final priorityApps = await PriorityAppsPrefs().getPriorityApps();
+      
+      // Start monitoring service with priority apps
+      await AppUsageService.startMonitoring(
+        timeLimitMinutes,
+        priorityApps: priorityApps,
+      );
       
       // Save monitoring status
       await AppUsagePrefs().setMonitoringEnabled(true);

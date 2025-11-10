@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:minilauncher/features/model/models/usage_model.dart';
 
@@ -47,12 +48,39 @@ class AppUsageService {
   }
 
   /// Start background monitoring service
-  static Future<void> startMonitoring(int timeLimitMinutes) async {
+  static Future<void> startMonitoring(
+    int timeLimitMinutes, {
+    List<String>? priorityApps,
+  }) async {
     try {
-      await _channel.invokeMethod('startMonitoring', {
+      debugPrint('========================================');
+      debugPrint('🔧 APP_USAGE_SERVICE DEBUG:');
+      debugPrint('⏱️ Time limit: $timeLimitMinutes minutes');
+      debugPrint('📱 Priority apps: ${priorityApps?.length ?? 0}');
+      if (priorityApps != null && priorityApps.isNotEmpty) {
+        debugPrint('📦 Apps list:');
+        for (var i = 0; i < priorityApps.length; i++) {
+          debugPrint('  [$i] ${priorityApps[i]}');
+        }
+      } else {
+        debugPrint('⚠️ No priority apps provided');
+      }
+      
+      final args = <String, dynamic>{
         'timeLimitMinutes': timeLimitMinutes,
-      });
+      };
+      
+      if (priorityApps != null && priorityApps.isNotEmpty) {
+        args['priorityApps'] = priorityApps;
+        debugPrint('✅ Adding priority apps to method channel args');
+      }
+      
+      debugPrint('🚀 Invoking native startMonitoring...');
+      debugPrint('========================================');
+      await _channel.invokeMethod('startMonitoring', args);
+      debugPrint('✅ Native startMonitoring completed');
     } on PlatformException catch (e) {
+      debugPrint('❌ Failed to start monitoring: ${e.message}');
       throw Exception("Failed to start monitoring: '${e.message}'.");
     }
   }

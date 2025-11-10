@@ -5,6 +5,7 @@ import 'package:minilauncher/core/common/custom_appbar.dart';
 import 'package:minilauncher/core/service/app_usage_service.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/model/data/app_usage_prefs.dart';
+import 'package:minilauncher/features/model/data/priority_apps_localdb.dart';
 
 /// Test screen to verify usage monitoring is working
 /// Add this to your settings or debug menu
@@ -80,10 +81,15 @@ class _UsageMonitoringTestScreenState extends State<UsageMonitoringTestScreen> {
       }
 
       await AppUsagePrefs().setTimeLimit(_timeLimit);
-      await AppUsageService.startMonitoring(_timeLimit);
+      
+      // Load priority apps
+      final priorityApps = await PriorityAppsPrefs().getPriorityApps();
+      debugPrint('📱 Test: Starting monitoring for ${priorityApps.length} priority apps');
+      
+      await AppUsageService.startMonitoring(_timeLimit, priorityApps: priorityApps);
       await AppUsagePrefs().setMonitoringEnabled(true);
 
-      _showSuccess('Monitoring started with $_timeLimit min limit');
+      _showSuccess('Monitoring started with $_timeLimit min limit for ${priorityApps.length} apps');
       await _checkStatus();
     } catch (e) {
       _showError('Failed to start: $e');

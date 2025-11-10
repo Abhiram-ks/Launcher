@@ -14,6 +14,7 @@ import 'core/service/usage_notification_service.dart';
 import 'core/themes/app_themes.dart';
 import 'features/model/data/app_icon_shape_prefs.dart';
 import 'features/model/data/app_usage_prefs.dart';
+import 'features/model/data/priority_apps_localdb.dart';
 import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'features/view_model/cubit/double_tap_cubit.dart';
@@ -31,7 +32,12 @@ void main() async {
       final hasPermission = await AppUsageService.hasUsagePermission();
       if (hasPermission) {
         final timeLimit = await AppUsagePrefs().getTimeLimit();
-        await AppUsageService.startMonitoring(timeLimit);
+        final priorityApps = await PriorityAppsPrefs().getPriorityApps();
+        debugPrint('📱 Auto-resuming monitoring for ${priorityApps.length} priority apps');
+        await AppUsageService.startMonitoring(
+          timeLimit,
+          priorityApps: priorityApps,
+        );
       }
     }
     

@@ -9,6 +9,7 @@ import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_usage_service.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/model/data/app_usage_prefs.dart';
+import 'package:minilauncher/features/model/data/priority_apps_localdb.dart';
 import 'package:minilauncher/features/view/screens/screen_time_activity/screen_time_activity.dart';
 import 'package:minilauncher/features/view/widget/timer_picker_widget.dart';
 import 'package:minilauncher/features/view_model/cubit/screen_timer_cubit.dart';
@@ -36,7 +37,12 @@ class ScreenTimerScreen extends StatelessWidget {
             ConstantWidgets.hight30(context),
 
             // Info Card
-            _buildInfoCard(context),
+        //    _buildInfoCard(context),
+
+            ConstantWidgets.hight20(context),
+
+            // Monitoring Toggle
+            _buildMonitoringToggle(context),
 
             ConstantWidgets.hight30(context),
 
@@ -148,56 +154,197 @@ class ScreenTimerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: AppTextStyleNotifier.instance,
-      builder: (context, _, __) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppPalette.greyColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppPalette.greyColor.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+  // Widget _buildInfoCard(BuildContext context) {
+  //   return ValueListenableBuilder(
+  //     valueListenable: AppTextStyleNotifier.instance,
+  //     builder: (context, _, __) {
+  //       return Container(
+  //         margin: const EdgeInsets.symmetric(horizontal: 16),
+  //         padding: const EdgeInsets.all(16),
+  //         decoration: BoxDecoration(
+  //           color: AppPalette.greyColor.withValues(alpha: 0.1),
+  //           borderRadius: BorderRadius.circular(16),
+  //           border: Border.all(
+  //             color: AppPalette.greyColor.withValues(alpha: 0.2),
+  //             width: 1,
+  //           ),
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(12),
+  //               decoration: BoxDecoration(
+  //                 color: AppPalette.greyColor.withValues(alpha: 0.2),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: Icon(
+  //                 CupertinoIcons.info_circle_fill,
+  //                 color: AppTextStyleNotifier.instance.textColor
+  //                     .withValues(alpha: 0.7),
+  //                 size: 24,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 16),
+  //             Expanded(
+  //               child: Text(
+  //                 'You\'ll be notified when you exceed this time limit on any app',
+  //                 style: GoogleFonts.getFont(
+  //                   AppTextStyleNotifier.instance.fontFamily,
+  //                   textStyle: TextStyle(
+  //                     color: AppTextStyleNotifier.instance.textColor
+  //                         .withValues(alpha: 0.85),
+  //                     fontSize: 14,
+  //                     height: 1.4,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  Widget _buildMonitoringToggle(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: AppUsageService.isMonitoringRunning(),
+      builder: (context, snapshot) {
+        final isMonitoring = snapshot.data ?? false;
+
+        return ValueListenableBuilder(
+          valueListenable: AppTextStyleNotifier.instance,
+          builder: (context, _, __) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppPalette.greyColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
                   color: AppPalette.greyColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  CupertinoIcons.info_circle_fill,
-                  color: AppTextStyleNotifier.instance.textColor
-                      .withValues(alpha: 0.7),
-                  size: 24,
+                  width: 1,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'You\'ll be notified when you exceed this time limit on any app',
-                  style: GoogleFonts.getFont(
-                    AppTextStyleNotifier.instance.fontFamily,
-                    textStyle: TextStyle(
-                      color: AppTextStyleNotifier.instance.textColor
-                          .withValues(alpha: 0.85),
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color:  AppPalette.greyColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          isMonitoring
+                              ? CupertinoIcons.eye_solid
+                              : CupertinoIcons.eye_slash,
+                          color: 
+                              AppTextStyleNotifier.instance.textColor
+                                  .withValues(alpha: 0.6),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Monitoring',
+                            style: GoogleFonts.getFont(
+                              AppTextStyleNotifier.instance.fontFamily,
+                              textStyle: TextStyle(
+                                color: AppTextStyleNotifier.instance.textColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            isMonitoring ? 'Active' : 'Stopped',
+                            style: GoogleFonts.getFont(
+                              AppTextStyleNotifier.instance.fontFamily,
+                              textStyle: TextStyle(
+                                color: isMonitoring
+                                    ? AppPalette.blueColor
+                                    : AppTextStyleNotifier.instance.textColor
+                                        .withValues(alpha: 0.6),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
+                  Switch(
+                    value: isMonitoring,
+                    onChanged: (value) async {
+                      if (value) {
+                        // User wants to start - do nothing, they need to set time first
+                        CustomSnackBar.show(
+                          context,
+                          message: 'Set time limit below and tap "Start Monitoring"',
+                          backgroundColor: AppPalette.greyColor,
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        // User wants to stop
+                        await _handleStopMonitoring(context);
+                      }
+                    },
+                    activeColor: AppPalette.blueColor,
+                    activeTrackColor:
+                        AppPalette.blueColor.withValues(alpha: 0.5),
+                    inactiveThumbColor: AppPalette.greyColor,
+                    inactiveTrackColor:
+                        AppPalette.greyColor.withValues(alpha: 0.3),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  Future<void> _handleStopMonitoring(BuildContext context) async {
+    try {
+      // Stop monitoring service
+      await AppUsageService.stopMonitoring();
+
+      // Save monitoring status
+      await AppUsagePrefs().setMonitoringEnabled(false);
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context,
+          message: '✓ Monitoring stopped',
+          backgroundColor: AppPalette.greenColor,
+          textAlign: TextAlign.center,
+        );
+
+        // Refresh the screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ScreenTimerScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context,
+          message: 'Error: ${e.toString()}',
+          backgroundColor: Colors.red,
+          textAlign: TextAlign.center,
+        );
+      }
+    }
   }
 
   Widget _buildSelectedTimeDisplay(BuildContext context) {
@@ -241,7 +388,7 @@ class ScreenTimerScreen extends StatelessWidget {
                       textStyle: TextStyle(
                         color: AppTextStyleNotifier.instance.textColor,
                         fontSize: 42,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                         letterSpacing: 1,
                       ),
                     ),
@@ -381,8 +528,26 @@ class ScreenTimerScreen extends StatelessWidget {
       await AppUsagePrefs().clearNotifiedApps();
       await AppUsageService.resetNotifications();
 
-      // Start monitoring service
-      await AppUsageService.startMonitoring(totalMinutes);
+      // 🎯 Load priority apps (user-selected apps)
+      final priorityApps = await PriorityAppsPrefs().getPriorityApps();
+      debugPrint('========================================');
+      debugPrint('🎯 PRIORITY APPS DEBUG:');
+      debugPrint('📱 Total priority apps: ${priorityApps.length}');
+      debugPrint('📦 Priority apps list: $priorityApps');
+      if (priorityApps.isEmpty) {
+        debugPrint('⚠️ WARNING: No priority apps selected!');
+      } else {
+        for (var i = 0; i < priorityApps.length; i++) {
+          debugPrint('  [$i] ${priorityApps[i]}');
+        }
+      }
+      debugPrint('========================================');
+
+      // Start monitoring service with priority apps filter
+      await AppUsageService.startMonitoring(
+        totalMinutes,
+        priorityApps: priorityApps,
+      );
 
       // Save monitoring status
       await AppUsagePrefs().setMonitoringEnabled(true);

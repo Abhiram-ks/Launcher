@@ -221,9 +221,38 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 "startMonitoring" -> {
+                    android.util.Log.d("MainActivity", "========================================")
+                    android.util.Log.d("MainActivity", "🎯 MAINACTIVITY DEBUG:")
+                    
                     val timeLimitMinutes = call.argument<Int>("timeLimitMinutes") ?: 15
+                    android.util.Log.d("MainActivity", "⏱️ Time limit: $timeLimitMinutes")
+                    
+                    val priorityApps = call.argument<List<String>>("priorityApps")
+                    android.util.Log.d("MainActivity", "📱 Received priority apps: ${priorityApps?.size ?: 0}")
+                    
+                    if (priorityApps != null) {
+                        priorityApps.forEachIndexed { index, app ->
+                            android.util.Log.d("MainActivity", "  [$index] $app")
+                        }
+                    } else {
+                        android.util.Log.w("MainActivity", "⚠️ No priority apps received from Flutter")
+                    }
+                    
                     val serviceIntent = Intent(this, UsageMonitorService::class.java)
                     serviceIntent.putExtra(UsageMonitorService.EXTRA_TIME_LIMIT, timeLimitMinutes)
+                    
+                    if (priorityApps != null) {
+                        val arrayList = ArrayList(priorityApps)
+                        serviceIntent.putStringArrayListExtra(
+                            UsageMonitorService.EXTRA_PRIORITY_APPS,
+                            arrayList
+                        )
+                        android.util.Log.d("MainActivity", "✅ Added ${arrayList.size} apps to intent extras")
+                    }
+                    
+                    android.util.Log.d("MainActivity", "🚀 Starting service...")
+                    android.util.Log.d("MainActivity", "========================================")
+                    
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                         startForegroundService(serviceIntent)
                     } else {

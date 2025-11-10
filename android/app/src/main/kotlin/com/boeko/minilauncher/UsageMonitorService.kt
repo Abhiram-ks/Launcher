@@ -17,9 +17,11 @@ class UsageMonitorService : Service() {
     private var timeLimitMinutes: Int = 15
     private lateinit var prefs: SharedPreferences
     private val notifiedApps = mutableSetOf<String>()
+    private val priorityApps = mutableSetOf<String>() // Apps to monitor
     
     companion object {
         const val EXTRA_TIME_LIMIT = "time_limit_minutes"
+        const val EXTRA_PRIORITY_APPS = "priority_apps"
         const val CHANNEL_ID = "screen_timer_service"
         const val NOTIFICATION_ID = 1001
         private const val CHECK_INTERVAL = 30000L // 30 seconds
@@ -52,6 +54,23 @@ class UsageMonitorService : Service() {
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         timeLimitMinutes = intent?.getIntExtra(EXTRA_TIME_LIMIT, 15) ?: 15
+        
+        // Get priority apps list from intent
+        val priorityAppsList = intent?.getStringArrayListExtra(EXTRA_PRIORITY_APPS)
+        android.util.Log.d("UsageMonitorService", "========================================")
+        android.util.Log.d("UsageMonitorService", "🎯 NATIVE PRIORITY APPS DEBUG:")
+        if (priorityAppsList != null) {
+            priorityApps.clear()
+            priorityApps.addAll(priorityAppsList)
+            android.util.Log.d("UsageMonitorService", "📱 Priority apps loaded: ${priorityApps.size} apps")
+            priorityApps.forEachIndexed { index, app ->
+                android.util.Log.d("UsageMonitorService", "  [$index] $app")
+            }
+        } else {
+            android.util.Log.w("UsageMonitorService", "⚠️ No priority apps provided - will monitor ALL apps")
+        }
+        android.util.Log.d("UsageMonitorService", "========================================")
+
         
         android.util.Log.d("UsageMonitorService", "⏱️ Time limit set to: $timeLimitMinutes minutes")
         
@@ -172,9 +191,22 @@ class UsageMonitorService : Service() {
                 return
             }
             
-            // Skip our own app
+            // Skip our own app (launcher)
             if (currentApp == packageName) {
                 return
+            }
+            
+            // 🎯 FILTER: Only monitor priority apps (if list provided)
+            if (priorityApps.isNotEmpty()) {
+                if (!priorityApps.contains(currentApp)) {
+                    android.util.Log.d("UsageMonitorService", "⏭️ SKIP: $currentApp NOT in priority list")
+                    android.util.Log.d("UsageMonitorService", "   Priority list has ${priorityApps.size} apps: $priorityApps")
+                    return
+                } else {
+                    android.util.Log.d("UsageMonitorService", "✅ CHECK: $currentApp IS in priority list")
+                }
+            } else {
+                android.util.Log.w("UsageMonitorService", "⚠️ Priority list is empty - checking all apps")
             }
             
             // Check usage time for this app today
@@ -198,7 +230,8 @@ class UsageMonitorService : Service() {
             
             // Check if limit is exceeded and not already notified
             if (usageMinutes >= timeLimitMinutes && !notifiedApps.contains(currentApp)) {
-                android.util.Log.d("UsageMonitorService", "🚨 LIMIT REACHED for $appName ($usageMinutes min)")
+                val timeText = formatTimeForNotification(usageMinutes)
+                android.util.Log.d("UsageMonitorService", "🚨 LIMIT REACHED for $appName ($timeText)")
                 showLimitNotification(currentApp, usageMinutes)
                 notifiedApps.add(currentApp)
                 saveNotifiedApps()
@@ -210,11 +243,30 @@ class UsageMonitorService : Service() {
         }
     }
     
+    private fun formatTimeForNotification(minutes: Int): String {
+        return when {
+            minutes < 60 -> "$minutes minutes"
+            minutes % 60 == 0 -> {
+                val hours = minutes / 60
+                if (hours == 1) "1 hour" else "$hours hours"
+            }
+            else -> {
+                val hours = minutes / 60
+                val remainingMinutes = minutes % 60
+                val hourText = if (hours == 1) "1 hour" else "$hours hours"
+                "$hourText $remainingMinutes minutes"
+            }
+        }
+    }
+    
     private fun showLimitNotification(packageName: String, minutes: Int) {
         try {
             val packageManager = this.packageManager
             val appInfo = packageManager.getApplicationInfo(packageName, 0)
             val appName = packageManager.getApplicationLabel(appInfo).toString()
+            
+            // Format time display
+            val timeText = formatTimeForNotification(minutes)
             
             // Create intent to open app and show dialog
             val notificationIntent = Intent(this, MainActivity::class.java)
@@ -234,7 +286,7 @@ class UsageMonitorService : Service() {
             
             val notification = NotificationCompat.Builder(this, "screen_timer_alerts")
                 .setContentTitle("⏰ Screen Time Alert")
-                .setContentText("You've used $appName for $minutes minutes")
+                .setContentText("You've used $appName for $timeText")
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -244,7 +296,7 @@ class UsageMonitorService : Service() {
                 .setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_LIGHTS)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(NotificationCompat.BigTextStyle()
-                    .bigText("You've used $appName for $minutes minutes today. Consider taking a break!"))
+                    .bigText("You've used $appName for $timeText today. Consider taking a break!"))
                 .build()
             
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
