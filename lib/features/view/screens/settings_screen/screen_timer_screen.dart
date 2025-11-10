@@ -3,16 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/common/custom_appbar.dart';
+import 'package:minilauncher/core/common/custom_snackbar.dart';
 import 'package:minilauncher/core/constant/constant.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
+import 'package:minilauncher/core/service/app_usage_service.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
-import 'package:minilauncher/features/view_model/cubit/screen_timer_cubit.dart';
+import 'package:minilauncher/features/model/data/app_usage_prefs.dart';
+import 'package:minilauncher/features/view/screens/screen_time_activity/screen_time_activity.dart';
 import 'package:minilauncher/features/view/widget/timer_picker_widget.dart';
-
-import '../../../../core/common/custom_snackbar.dart';
-import '../../../../core/service/app_usage_service.dart';
-import '../../../model/data/app_usage_prefs.dart';
-import '../screen_time_activity/screen_time_activity.dart';
+import 'package:minilauncher/features/view_model/cubit/screen_timer_cubit.dart';
 
 class ScreenTimerScreen extends StatelessWidget {
   const ScreenTimerScreen({super.key});
@@ -23,7 +22,7 @@ class ScreenTimerScreen extends StatelessWidget {
       create: (_) => ScreenTimerCubit(),
       child: Scaffold(
         appBar: CustomAppBar(
-          title: 'Set Timer',
+          title: 'Screen Timer',
           backgroundColor: AppPalette.blackColor,
           isTitle: true,
         ),
@@ -31,10 +30,15 @@ class ScreenTimerScreen extends StatelessWidget {
           children: [
             ConstantWidgets.hight20(context),
 
-            _buildInstructionSection("View Activity"),
+            // Header with Activity Link
+            _buildHeaderSection(context),
 
-            ConstantWidgets.hight20(context),
-            // Instructions
+            ConstantWidgets.hight30(context),
+
+            // Info Card
+            _buildInfoCard(context),
+
+            ConstantWidgets.hight30(context),
 
             // Time Picker
             const Expanded(child: TimerPickerWidget()),
@@ -42,7 +46,7 @@ class ScreenTimerScreen extends StatelessWidget {
             ConstantWidgets.hight20(context),
 
             // Selected Time Display
-            _buildSelectedTimeDisplay(),
+            _buildSelectedTimeDisplay(context),
 
             ConstantWidgets.hight30(context),
 
@@ -56,100 +60,205 @@ class ScreenTimerScreen extends StatelessWidget {
     );
   }
 
-  //when tap this need to navigate to ScreenTimeActivity screen
-  Widget _buildInstructionSection(String instruction) {
+  Widget _buildHeaderSection(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: AppTextStyleNotifier.instance,
       builder: (context, _, __) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: GestureDetector(
-              onTap:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ScreenTimeActivity(),
-                    ),
-                  ),
-              child: Row(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    instruction,
+                    'Set Time Limit',
                     style: GoogleFonts.getFont(
                       AppTextStyleNotifier.instance.fontFamily,
                       textStyle: TextStyle(
                         color: AppTextStyleNotifier.instance.textColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  Spacer(),
-
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: AppTextStyleNotifier.instance.textColor,
-                    size: 15,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Control your screen time',
+                    style: GoogleFonts.getFont(
+                      AppTextStyleNotifier.instance.fontFamily,
+                      textStyle: TextStyle(
+                        color: AppTextStyleNotifier.instance.textColor
+                            .withValues(alpha: 0.6),
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ScreenTimeActivity(),
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppPalette.blueColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppPalette.blueColor.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.bar_chart_rounded,
+                        color: AppPalette.blueColor,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'View Stats',
+                        style: GoogleFonts.getFont(
+                          AppTextStyleNotifier.instance.fontFamily,
+                          textStyle: const TextStyle(
+                            color: AppPalette.blueColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildSelectedTimeDisplay() {
+  Widget _buildInfoCard(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: AppTextStyleNotifier.instance,
+      builder: (context, _, __) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppPalette.greyColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppPalette.greyColor.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppPalette.greyColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  CupertinoIcons.info_circle_fill,
+                  color: AppTextStyleNotifier.instance.textColor
+                      .withValues(alpha: 0.7),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'You\'ll be notified when you exceed this time limit on any app',
+                  style: GoogleFonts.getFont(
+                    AppTextStyleNotifier.instance.fontFamily,
+                    textStyle: TextStyle(
+                      color: AppTextStyleNotifier.instance.textColor
+                          .withValues(alpha: 0.85),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSelectedTimeDisplay(BuildContext context) {
     return BlocBuilder<ScreenTimerCubit, ScreenTimerState>(
       builder: (context, state) {
+        final totalMinutes = state.hours * 60 + state.minutes;
+        final isValid = totalMinutes > 0;
+
         return ValueListenableBuilder(
           valueListenable: AppTextStyleNotifier.instance,
           builder: (context, _, __) {
             return Container(
+              width: double.infinity,
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppPalette.greyColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+        
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppPalette.greyColor.withValues(alpha: 0.3),
-                  width: 1.5,
+                  color:
+                       AppPalette.greyColor.withValues(alpha: 0.3),
+                  width: 2,
                 ),
+                
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
                 children: [
-                  const Icon(
-                    CupertinoIcons.clock,
-                    color: AppPalette.whiteColor,
-                    size: 24,
+                  Icon(
+                    CupertinoIcons.timer,
+                    color:  AppTextStyleNotifier.instance.textColor
+                            .withValues(alpha: 0.5),
+                    size: 40,
                   ),
-                  ConstantWidgets.width10(context),
-                  Text(
-                    'Selected: ',
-                    style: GoogleFonts.getFont(
-                      AppTextStyleNotifier.instance.fontFamily,
-                      textStyle: TextStyle(
-                        color: AppTextStyleNotifier.instance.textColor
-                            .withValues(alpha: 0.7),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 12),
+               
+                  const SizedBox(height: 8),
                   Text(
                     '${state.hours}h ${state.minutes}m',
                     style: GoogleFonts.getFont(
                       AppTextStyleNotifier.instance.fontFamily,
-                      textStyle: const TextStyle(
-                        color: AppPalette.whiteColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w400,
+                      textStyle: TextStyle(
+                        color: AppTextStyleNotifier.instance.textColor,
+                        fontSize: 42,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
+                  if (!isValid) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Select at least 1 minute',
+                      style: GoogleFonts.getFont(
+                        AppTextStyleNotifier.instance.fontFamily,
+                        textStyle: TextStyle(
+                          color: AppPalette.redColor.withValues(alpha: 0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -162,6 +271,9 @@ class ScreenTimerScreen extends StatelessWidget {
   Widget _buildSetButton(BuildContext context) {
     return BlocBuilder<ScreenTimerCubit, ScreenTimerState>(
       builder: (context, state) {
+        final totalMinutes = state.hours * 60 + state.minutes;
+        final isValid = totalMinutes > 0;
+
         return ValueListenableBuilder(
           valueListenable: AppTextStyleNotifier.instance,
           builder: (context, _, __) {
@@ -169,28 +281,46 @@ class ScreenTimerScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: 50,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    await _handleSetTimer(context, state);
-                  },
+                  onPressed: isValid
+                      ? () async {
+                          await _handleSetTimer(context, state);
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppPalette.whiteColor,
-                    foregroundColor: AppPalette.blackColor,
+                    backgroundColor: isValid
+                        ? AppPalette.whiteColor
+                        : AppPalette.greyColor.withValues(alpha: 0.3),
+                    foregroundColor: isValid
+                        ? AppPalette.blackColor
+                        : AppPalette.whiteColor.withValues(alpha: 0.4),
+                    disabledBackgroundColor:
+                        AppPalette.greyColor.withValues(alpha: 0.2),
+                    disabledForegroundColor:
+                        AppPalette.whiteColor.withValues(alpha: 0.4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Set Timer',
-                    style: GoogleFonts.getFont(
-                      AppTextStyleNotifier.instance.fontFamily,
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                     
+                  
+                      Text(
+                        'Start Monitoring',
+                        style: GoogleFonts.getFont(
+                          AppTextStyleNotifier.instance.fontFamily,
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -262,7 +392,7 @@ class ScreenTimerScreen extends StatelessWidget {
         CustomSnackBar.show(
           context,
           message:
-              'Timer set for ${state.hours}h ${state.minutes}m. Monitoring started!',
+              '✓ Timer set for ${state.hours}h ${state.minutes}m. Monitoring started!',
           backgroundColor: AppPalette.greenColor,
           textAlign: TextAlign.center,
         );
@@ -286,158 +416,156 @@ class ScreenTimerScreen extends StatelessWidget {
     BuildContext context, {
     required bool isUsagePermission,
   }) async {
-    final title =
-        isUsagePermission
-            ? 'Usage Stats Permission'
-            : 'Notification Permission';
-    final icon =
-        isUsagePermission
-            ? CupertinoIcons.chart_bar_fill
-            : CupertinoIcons.bell_fill;
-    final message =
-        isUsagePermission
-            ? 'To track app usage, we need permission to access usage statistics. This helps monitor how much time you spend on each app.'
-            : 'To send you screen time alerts, we need permission to show notifications. You\'ll be notified when you exceed your time limit.';
+    final title = isUsagePermission
+        ? 'Usage Stats Permission'
+        : 'Notification Permission';
+    final icon = isUsagePermission
+        ? CupertinoIcons.chart_bar_fill
+        : CupertinoIcons.bell_fill;
+    final message = isUsagePermission
+        ? 'To track app usage, we need permission to access usage statistics. This helps monitor how much time you spend on each app.'
+        : 'To send you screen time alerts, we need permission to show notifications. You\'ll be notified when you exceed your time limit.';
 
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppPalette.blackColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: AppTextStyleNotifier.instance.textColor.withValues(
-                  alpha: 0.3,
-                ),
-                width: 1.5,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppPalette.blackColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: AppTextStyleNotifier.instance.textColor
+                .withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppPalette.greyColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: AppTextStyleNotifier.instance.textColor
+                    .withValues(alpha: 0.8),
+                size: 28,
               ),
             ),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppPalette.orengeColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: AppPalette.orengeColor, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: GoogleFonts.getFont(
-                      AppTextStyleNotifier.instance.fontFamily,
-                      textStyle: TextStyle(
-                        color: AppTextStyleNotifier.instance.textColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.getFont(
+                  AppTextStyleNotifier.instance.fontFamily,
+                  textStyle: TextStyle(
+                    color: AppTextStyleNotifier.instance.textColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              ),
             ),
-            content: Text(
-              message,
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.getFont(
+            AppTextStyleNotifier.instance.fontFamily,
+            textStyle: TextStyle(
+              color: AppTextStyleNotifier.instance.textColor
+                  .withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
               style: GoogleFonts.getFont(
                 AppTextStyleNotifier.instance.fontFamily,
                 textStyle: TextStyle(
-                  color: AppTextStyleNotifier.instance.textColor.withValues(
-                    alpha: 0.8,
-                  ),
-                  fontSize: 14,
+                  color: AppTextStyleNotifier.instance.textColor
+                      .withValues(alpha: 0.6),
                 ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'Cancel',
-                  style: GoogleFonts.getFont(
-                    AppTextStyleNotifier.instance.fontFamily,
-                    textStyle: TextStyle(
-                      color: AppTextStyleNotifier.instance.textColor.withValues(
-                        alpha: 0.6,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-
-                  if (isUsagePermission) {
-                    await AppUsageService.requestUsagePermission();
-
-                    // Wait a bit for user to grant permission
-                    await Future.delayed(const Duration(seconds: 2));
-
-                    // Check if permission was granted
-                    if (context.mounted) {
-                      final hasPermission =
-                          await AppUsageService.hasUsagePermission();
-                      if (hasPermission) {
-                        CustomSnackBar.show(
-                          context,
-                          message: 'Permission granted! Now set your timer.',
-                          backgroundColor: AppPalette.greenColor,
-                          textAlign: TextAlign.center,
-                        );
-                      }
-                    }
-                  } else {
-                    // Request notification permission
-                    await AppUsageService.requestNotificationPermission();
-
-                    // Wait a bit for user to grant permission
-                    await Future.delayed(const Duration(seconds: 1));
-
-                    // Check if permission was granted
-                    if (context.mounted) {
-                      final hasPermission =
-                          await AppUsageService.hasNotificationPermission();
-                      if (hasPermission) {
-                        CustomSnackBar.show(
-                          context,
-                          message:
-                              'Notification permission granted! Now set your timer.',
-                          backgroundColor: AppPalette.greenColor,
-                          textAlign: TextAlign.center,
-                        );
-                      } else {
-                        CustomSnackBar.show(
-                          context,
-                          message:
-                              'Notification permission denied. You won\'t receive alerts.',
-                          backgroundColor: Colors.orange,
-                          textAlign: TextAlign.center,
-                        );
-                      }
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.orengeColor,
-                  foregroundColor: AppPalette.whiteColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Grant Permission',
-                  style: GoogleFonts.getFont(
-                    AppTextStyleNotifier.instance.fontFamily,
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
           ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              if (isUsagePermission) {
+                await AppUsageService.requestUsagePermission();
+
+                // Wait a bit for user to grant permission
+                await Future.delayed(const Duration(seconds: 2));
+
+                // Check if permission was granted
+                if (context.mounted) {
+                  final hasPermission =
+                      await AppUsageService.hasUsagePermission();
+                  if (hasPermission) {
+                    CustomSnackBar.show(
+                      context,
+                      message: 'Permission granted! Now set your timer.',
+                      backgroundColor: AppPalette.greenColor,
+                      textAlign: TextAlign.center,
+                    );
+                  }
+                }
+              } else {
+                // Request notification permission
+                await AppUsageService.requestNotificationPermission();
+
+                // Wait a bit for user to grant permission
+                await Future.delayed(const Duration(seconds: 1));
+
+                // Check if permission was granted
+                if (context.mounted) {
+                  final hasPermission =
+                      await AppUsageService.hasNotificationPermission();
+                  if (hasPermission) {
+                    CustomSnackBar.show(
+                      context,
+                      message:
+                          'Notification permission granted! Now set your timer.',
+                      backgroundColor: AppPalette.greenColor,
+                      textAlign: TextAlign.center,
+                    );
+                  } else {
+                    CustomSnackBar.show(
+                      context,
+                      message:
+                          'Notification permission denied. You won\'t receive alerts.',
+                      backgroundColor: Colors.orange,
+                      textAlign: TextAlign.center,
+                    );
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppPalette.whiteColor,
+              foregroundColor: AppPalette.blackColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Grant Permission',
+              style: GoogleFonts.getFont(
+                AppTextStyleNotifier.instance.fontFamily,
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

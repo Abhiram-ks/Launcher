@@ -18,6 +18,12 @@ class WeeklyBarChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate dynamic maxY based on actual data
+    final maxHours = hours.reduce((a, b) => a > b ? a : b);
+    final dynamicMaxY = (maxHours * 1.2).ceilToDouble(); // Add 20% padding
+    final minMaxY = 8.0; // Minimum scale
+    final finalMaxY = dynamicMaxY > minMaxY ? dynamicMaxY : minMaxY;
+
     return ValueListenableBuilder(
       valueListenable: AppTextStyleNotifier.instance,
       builder: (context, _, __) {
@@ -25,6 +31,7 @@ class WeeklyBarChartWidget extends StatelessWidget {
           height: 300,
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.symmetric(horizontal: 16),
+          clipBehavior: Clip.hardEdge, // Prevent overflow
           decoration: BoxDecoration(
             color: AppPalette.greyColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
@@ -36,7 +43,7 @@ class WeeklyBarChartWidget extends StatelessWidget {
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,
-              maxY: 8,
+              maxY: finalMaxY,
               minY: 0,
               barTouchData: BarTouchData(
                 enabled: true,
