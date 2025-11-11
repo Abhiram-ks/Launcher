@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
-import 'package:minilauncher/core/themes/app_colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override

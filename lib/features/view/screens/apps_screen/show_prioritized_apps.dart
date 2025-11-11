@@ -7,6 +7,8 @@ import 'package:minilauncher/features/view/screens/settings_screen/settings_scre
 import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
+import 'package:minilauncher/core/service/app_customization_helper.dart';
+import 'package:minilauncher/features/model/data/app_customization_prefs.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'package:minilauncher/features/view_model/cubit/prioritized_scroll_cubit.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
@@ -85,7 +87,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.only(top: 10, left: 20),
+              padding: const EdgeInsets.only(top: 5, left: 20),
               child: StreamBuilder<DateTime>(
                 stream: Stream.periodic(
                   const Duration(seconds: 1),
@@ -181,32 +183,46 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
               return ValueListenableBuilder(
                 valueListenable: AppFontSizeNotifier.instance,
                 builder: (context, ___, ____) {
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                    ),
-                    leading: AppIconWidget(
-                      iconData: app.icon,
-                      size: 40,
-                      appName: app.name,
-                    ),
-                    title: Text(
-                      app.name,
-                      style: GoogleFonts.getFont(
-                        AppTextStyleNotifier.instance.fontFamily,
-                        textStyle: TextStyle(
-                          color: AppTextStyleNotifier.instance.textColor,
-                          fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                          fontSize: AppFontSizeNotifier.instance.value,
+                  return StreamBuilder<Map<String, dynamic>?>(
+                    stream: AppCustomizationPrefs.instance.watchCustomization(app.packageName),
+                    builder: (context, customizationSnapshot) {
+                      final displayName = AppCustomizationHelper.getCustomizedAppName(
+                        app.packageName,
+                        app.name,
+                      );
+                      final customIconPath = AppCustomizationHelper.getCustomizedAppIconPath(
+                        app.packageName,
+                      );
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
                         ),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
-                    ),
-                    onTap: () {
-                      context.read<RootBloc>().add(
-                        LaunchAppEvent(packageName: app.packageName),
+                        leading: AppIconWidget(
+                          iconData: app.icon,
+                          iconPath: customIconPath,
+                          size: 40,
+                          appName: displayName,
+                        ),
+                        title: Text(
+                          displayName,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value,
+                            ),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                        ),
+                        onTap: () {
+                          context.read<RootBloc>().add(
+                            LaunchAppEvent(packageName: app.packageName),
+                          );
+                        },
                       );
                     },
                   );
@@ -535,45 +551,59 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
   }
 
   Widget _buildGridAppItem(dynamic app) {
-    return ValueListenableBuilder(
-      valueListenable: AppTextStyleNotifier.instance,
-      builder: (context, _, __) {
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: AppCustomizationPrefs.instance.watchCustomization(app.packageName),
+      builder: (context, customizationSnapshot) {
+        final displayName = AppCustomizationHelper.getCustomizedAppName(
+          app.packageName,
+          app.name ?? '',
+        );
+        final customIconPath = AppCustomizationHelper.getCustomizedAppIconPath(
+          app.packageName,
+        );
+
         return ValueListenableBuilder(
-          valueListenable: AppFontSizeNotifier.instance,
-          builder: (context, ___, ____) {
-            return InkWell(
-              onTap: () {
-                context.read<RootBloc>().add(
-                  LaunchAppEvent(packageName: app.packageName),
-                );
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIconWidget(
-                    iconData: app.icon,
-                    size: 42,
-                    appName: app.name,
-                  ),
-                  Flexible(
-                    child: Text(
-                      app.name,
-                      style: GoogleFonts.getFont(
-                        AppTextStyleNotifier.instance.fontFamily,
-                        textStyle: TextStyle(
-                          color: AppTextStyleNotifier.instance.textColor,
-                          fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                          fontSize: AppFontSizeNotifier.instance.value * 0.75,
+          valueListenable: AppTextStyleNotifier.instance,
+          builder: (context, _, __) {
+            return ValueListenableBuilder(
+              valueListenable: AppFontSizeNotifier.instance,
+              builder: (context, ___, ____) {
+                return InkWell(
+                  onTap: () {
+                    context.read<RootBloc>().add(
+                      LaunchAppEvent(packageName: app.packageName),
+                    );
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIconWidget(
+                        iconData: app.icon,
+                        iconPath: customIconPath,
+                        size: 42,
+                        appName: displayName,
+                      ),
+                      Flexible(
+                        child: Text(
+                          displayName,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value * 0.75,
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );

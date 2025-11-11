@@ -1,7 +1,6 @@
-import 'dart:developer';
+
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 // Hive initialized via HiveStorage
 import 'package:minilauncher/features/model/data/app_font_size_prefs.dart';
@@ -54,10 +53,6 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
-          print('themeState: ${themeState.isDarkMode}');
-          log('themeState: ${themeState.isDarkMode}');
-          log('themeState: ${themeState.isDarkMode}');
-          log('themeState: ${themeState.isDarkMode}');
           return MaterialApp(
             title: 'Mini Launcher',
             theme: themeState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,

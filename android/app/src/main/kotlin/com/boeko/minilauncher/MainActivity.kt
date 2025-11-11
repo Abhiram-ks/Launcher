@@ -3,6 +3,7 @@ import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.EventChannel
 import android.content.Intent
 import android.provider.Settings
 import android.content.ComponentName
@@ -12,14 +13,22 @@ import android.view.WindowManager
 import android.app.KeyguardManager
 import android.content.Context
 import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.os.Build
 
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "launcher_service"
     private val SCREEN_CONTROL_CHANNEL = "screen_control_service"
+    private val APP_MANAGEMENT_CHANNEL = "app_management_service"
+    private val APP_EVENTS_CHANNEL = "app_events_stream"
     private var isTurningOffScreen = false
     private var lastTurnOffTime = 0L
+    
+    private var packageChangeReceiver: BroadcastReceiver? = null
+    private var eventSink: EventChannel.EventSink? = null
     
     private fun getDeviceAdminComponent(): ComponentName {
         return ComponentName(this, LauncherDeviceAdminReceiver::class.java)
@@ -105,6 +114,21 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // Setup EventChannel for app install/uninstall events
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, APP_EVENTS_CHANNEL).setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    eventSink = events
+                    registerPackageChangeReceiver()
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    unregisterPackageChangeReceiver()
+                    eventSink = null
+                }
+            }
+        )
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "setAsDefaultLauncher" -> {
@@ -149,6 +173,38 @@ class MainActivity: FlutterActivity() {
                         result.success(null)
                     } catch (e: Exception) {
                         result.error("OPEN_SETTINGS_FAILED", e.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APP_MANAGEMENT_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "uninstallApp" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName != null) {
+                        try {
+                            uninstallApp(packageName)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("UNINSTALL_FAILED", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Package name is required", null)
+                    }
+                }
+                "openAppInfo" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName != null) {
+                        try {
+                            openAppInfo(packageName)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.error("OPEN_INFO_FAILED", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Package name is required", null)
                     }
                 }
                 else -> result.notImplemented()
@@ -328,5 +384,101 @@ class MainActivity: FlutterActivity() {
         } catch (e: Exception) {
             false
         }
+    }
+
+    private fun uninstallApp(packageName: String) {
+        val intent = Intent(Intent.ACTION_DELETE)
+        intent.data = android.net.Uri.parse("package:$packageName")
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun openAppInfo(packageName: String) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = android.net.Uri.parse("package:$packageName")
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun registerPackageChangeReceiver() {
+        if (packageChangeReceiver != null) return
+
+        packageChangeReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                intent?.let {
+                    val packageName = it.data?.schemeSpecificPart
+                    val action = it.action
+                    
+                    android.util.Log.d("MainActivity", "Package event: $action for $packageName")
+                    
+                    when (action) {
+                        Intent.ACTION_PACKAGE_ADDED -> {
+                            if (it.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+                                // App was updated
+                                eventSink?.success(mapOf(
+                                    "event" to "app_updated",
+                                    "packageName" to packageName
+                                ))
+                            } else {
+                                // New app installed
+                                eventSink?.success(mapOf(
+                                    "event" to "app_installed",
+                                    "packageName" to packageName
+                                ))
+                            }
+                        }
+                        Intent.ACTION_PACKAGE_REMOVED -> {
+                            if (!it.getBooleanExtra(Intent.EXTRA_REPLACING, false)) {
+                                // App was uninstalled (not just updated)
+                                eventSink?.success(mapOf(
+                                    "event" to "app_uninstalled",
+                                    "packageName" to packageName
+                                ))
+                            }
+                        }
+                        Intent.ACTION_PACKAGE_CHANGED -> {
+                            // App was changed (enabled/disabled)
+                            eventSink?.success(mapOf(
+                                "event" to "app_changed",
+                                "packageName" to packageName
+                            ))
+                        }
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(packageChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(packageChangeReceiver, filter)
+        }
+        
+        android.util.Log.d("MainActivity", "Package change receiver registered")
+    }
+
+    private fun unregisterPackageChangeReceiver() {
+        packageChangeReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                android.util.Log.d("MainActivity", "Package change receiver unregistered")
+            } catch (e: IllegalArgumentException) {
+                // Receiver was not registered
+                android.util.Log.w("MainActivity", "Receiver was not registered: ${e.message}")
+            }
+        }
+        packageChangeReceiver = null
+    }
+
+    override fun onDestroy() {
+        unregisterPackageChangeReceiver()
+        super.onDestroy()
     }
 }

@@ -41,3 +41,21 @@ class TogglePriorityAppEvent extends RootEvent {
 }
 
 class ResetToShowPrioritizedEvent extends RootEvent {}
+
+// App lifecycle events
+class AppInstalledEvent extends RootEvent {
+  final String packageName;
+  AppInstalledEvent({required this.packageName});
+}
+
+class AppUninstalledEvent extends RootEvent {
+  final String packageName;
+  AppUninstalledEvent({required this.packageName});
+}
+
+class AppUpdatedEvent extends RootEvent {
+  final String packageName;
+  AppUpdatedEvent({required this.packageName});
+}
+
+class RefreshAppsEvent extends RootEvent {}

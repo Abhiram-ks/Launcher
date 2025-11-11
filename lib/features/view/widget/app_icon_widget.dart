@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:minilauncher/core/constant/app_icon_shape.dart';
@@ -7,12 +8,14 @@ import '../../../core/service/app_text_style_notifier.dart';
 
 class AppIconWidget extends StatelessWidget {
   final Uint8List? iconData;
+  final String? iconPath; // For custom icons from file path
   final double size;
   final String appName;
 
   const AppIconWidget({
     super.key,
-    required this.iconData,
+    this.iconData,
+    this.iconPath,
     this.size = 40,
     this.appName = '',
   });
@@ -31,18 +34,32 @@ class AppIconWidget extends StatelessWidget {
     final borderRadius = _getBorderRadius(shape);
     
     Widget iconWidget;
-    if (iconData != null && iconData!.isNotEmpty) {
-      iconWidget = Image.memory(
-        iconData!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder(borderRadius);
-        },
-        gaplessPlayback: true,
-      );
+    
+    // Priority: iconPath (custom icon) > iconData (original icon)
+    if (iconPath != null) {
+      // Custom icon from file path
+      final file = File(iconPath!);
+      if (file.existsSync()) {
+        iconWidget = Image.file(
+          file,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to original icon if custom icon fails
+            return _buildFromIconData(borderRadius);
+          },
+          gaplessPlayback: true,
+        );
+      } else {
+        // File doesn't exist, fallback to original icon
+        iconWidget = _buildFromIconData(borderRadius);
+      }
+    } else if (iconData != null && iconData!.isNotEmpty) {
+      // Original icon from memory
+      iconWidget = _buildFromIconData(borderRadius);
     } else {
+      // No icon available
       iconWidget = _buildPlaceholder(borderRadius);
     }
 
@@ -52,6 +69,22 @@ class AppIconWidget extends StatelessWidget {
         color:  AppTextStyleNotifier.instance.textColor.withValues(alpha: 0.1),
         child: iconWidget),
     );
+  }
+
+  Widget _buildFromIconData(BorderRadius borderRadius) {
+    if (iconData != null && iconData!.isNotEmpty) {
+      return Image.memory(
+        iconData!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPlaceholder(borderRadius);
+        },
+        gaplessPlayback: true,
+      );
+    }
+    return _buildPlaceholder(borderRadius);
   }
 
   BorderRadius _getBorderRadius(AppIconShape shape) {
