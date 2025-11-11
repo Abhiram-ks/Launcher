@@ -13,4 +13,5 @@ class AppPalette  {
   static const greyColor   = Colors.grey;
   static const primaryColor= Colors.blue;
   static const trasprentColor  = Colors.transparent;
+  
 }

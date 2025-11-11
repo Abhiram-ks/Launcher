@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,13 +20,16 @@ import 'features/model/data/priority_apps_localdb.dart';
 import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'features/view_model/cubit/double_tap_cubit.dart';
+import 'features/view_model/cubit/layout_cubit.dart';
+import 'features/view_model/cubit/theme_cubit.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await HiveStorage.init();
     await HiveStorage.init();
     await UsageNotificationService.init();
-  
+
   // Check if monitoring was enabled before and restart if needed
   try {
     final wasMonitoring = await AppUsagePrefs().isMonitoringEnabled();
@@ -40,7 +45,7 @@ void main() async {
         );
       }
     }
-    
+
     // Reset daily notifications if new day
     final shouldReset = await AppUsagePrefs().shouldResetDaily();
     if (shouldReset) {
@@ -85,12 +90,18 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => RootBloc()..add(RootInitialEvent())),
         BlocProvider(create: (_) => DoubleTapCubit()),
+        BlocProvider(create: (_) => LayoutCubit()),
+        BlocProvider(create: (_) => ThemeCubit()),
       ],
-      child: MaterialApp(
-        title: 'Mini Launcher',
-        theme: AppTheme.darkTheme,
-        debugShowCheckedModeBanner: false,
-        home: const RootScreen(),
+      child: BlocBuilder<ThemeCubit, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'Mini Launcher',
+            theme: themeState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+            debugShowCheckedModeBanner: false,
+            home: const RootScreen(),
+          );
+        },
       ),
     );
   }

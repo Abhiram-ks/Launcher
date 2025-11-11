@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config>
+    <!-- This file is required by AndroidManifest.xml for Google AdServices -->
+    <!-- Minimal configuration for compatibility -->
+</ad-services-config>
+

@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/constant.dart';
+import 'package:minilauncher/core/constant/app_layout_type.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 import 'package:minilauncher/features/view/widget/wallpaper_background.dart';
-import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
-import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_state.dart';
+import 'package:minilauncher/features/view_model/cubit/layout_cubit.dart';
+import 'package:minilauncher/features/view/widget/app_list_widgets/reusable_apps_list.dart';
+import 'package:minilauncher/features/view/widget/app_list_widgets/reusable_apps_grid.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AllAppsView extends StatefulWidget {
@@ -80,105 +82,144 @@ class _AllAppsViewState extends State<AllAppsView> {
           };
         }
 
-        return SafeArea(
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            body: WallpaperBackground(
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 10,
-                          left: 20,
-                          right: 20,
+        return Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: WallpaperBackground(
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ConstantWidgets.hight50(context),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 10,
+                        left: 20,
+                        right: 20,
+                      ),
+                      child: StreamBuilder<DateTime>(
+                        stream: Stream.periodic(
+                          const Duration(seconds: 1),
+                          (_) => DateTime.now(),
                         ),
-                        child: StreamBuilder<DateTime>(
-                          stream: Stream.periodic(
-                            const Duration(seconds: 1),
-                            (_) => DateTime.now(),
-                          ),
-                          initialData: DateTime.now(),
-                          builder: (context, snapshot) {
-                            final now = snapshot.data!;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
-                                  style: GoogleFonts.getFont(
-                                    AppTextStyleNotifier.instance.fontFamily,
-                                    textStyle: TextStyle(
-                                      color:
-                                          AppTextStyleNotifier
-                                              .instance
-                                              .textColor,
-                                      fontSize: 30,
-                                      fontWeight:
-                                          AppTextStyleNotifier
-                                              .instance
-                                              .fontWeight,
-                                    ),
+                        initialData: DateTime.now(),
+                        builder: (context, snapshot) {
+                          final now = snapshot.data!;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_getWeekday(now.weekday)}, ${now.day} ${_getMonth(now.month)}',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color:
+                                        AppTextStyleNotifier
+                                            .instance
+                                            .textColor,
+                                    fontSize: 30,
+                                    fontWeight:
+                                        AppTextStyleNotifier
+                                            .instance
+                                            .fontWeight,
                                   ),
                                 ),
-                                Text(
-                                  '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
-                                  style: GoogleFonts.getFont(
-                                    AppTextStyleNotifier.instance.fontFamily,
-                                    textStyle: TextStyle(
-                                      color: AppTextStyleNotifier.instance.textColor,
-                                      fontSize: 25,
-                                      fontWeight:  AppTextStyleNotifier.instance.fontWeight,
-                                    ),
+                              ),
+                              Text(
+                                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second}',
+                                style: GoogleFonts.getFont(
+                                  AppTextStyleNotifier.instance.fontFamily,
+                                  textStyle: TextStyle(
+                                    color: AppTextStyleNotifier.instance.textColor,
+                                    fontSize: 25,
+                                    fontWeight:  AppTextStyleNotifier.instance.fontWeight,
                                   ),
                                 ),
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-
-                      /// Search Bar
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: "Search apps...",
-                            hintStyle: GoogleFonts.getFont(
-                              AppTextStyleNotifier.instance.fontFamily,
-                              color: AppTextStyleNotifier.instance.textColor,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white10,
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: AppTextStyleNotifier.instance.textColor,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                    ),
+        
+                    /// Search Bar
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "Search apps...",
+                          hintStyle: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            color: AppTextStyleNotifier.instance.textColor,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white10,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: AppTextStyleNotifier.instance.textColor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
-
-                      Expanded(
-                        child:
-                            state.showingAlphabetIndex
-                                ? _buildGroupedAppsList(state)
-                                : _buildFilteredAppsList(state),
+                    ),
+        
+                    Expanded(
+                      child: BlocBuilder<LayoutCubit, LayoutState>(
+                        builder: (context, layoutState) {
+                          return layoutState.layoutType == AppLayoutType.list
+                              ? buildGroupedAppsList(
+                                  state: state,
+                                  scrollController: _scrollController,
+                                  sectionKeys: _sectionKeys,
+                                  onAppTap: (app) {
+                                    // Launch the app
+                                    context.read<RootBloc>().add(
+                                      LaunchAppEvent(packageName: app.packageName),
+                                    );
+                                  },
+                                )
+                              : (state.showingAlphabetIndex
+                                  ? buildGroupedAppsGrid(
+                                      state: state,
+                                      scrollController: _scrollController,
+                                      columnCount: layoutState.gridColumnCount,
+                                      onAppTap: (app) {
+                                        context.read<RootBloc>().add(
+                                          LaunchAppEvent(packageName: app.packageName),
+                                        );
+                                      },
+                                    )
+                                  : buildFilteredAppsGrid(
+                                      state: state,
+                                      columnCount: layoutState.gridColumnCount,
+                                      onAppTap: (app) {
+                                        context.read<RootBloc>().add(
+                                          LaunchAppEvent(packageName: app.packageName),
+                                        );
+                                      },
+                                    ));
+                        },
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+        
+                // Alphabetical Index Sidebar (only show in list view)
+                if (state.showingAlphabetIndex)
+                  BlocBuilder<LayoutCubit, LayoutState>(
+                    builder: (context, layoutState) {
+                      if (layoutState.layoutType == AppLayoutType.list) {
+                        return _buildAlphabetIndex(state);
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
-
-                  // Alphabetical Index Sidebar
-                  if (state.showingAlphabetIndex) _buildAlphabetIndex(state),
-                ],
-              ),
+              ],
             ),
           ),
         );
@@ -186,136 +227,7 @@ class _AllAppsViewState extends State<AllAppsView> {
     );
   }
 
-  Widget _buildGroupedAppsList(AllAppsState state) {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.only(right: 30),
-      itemCount: state.availableLetters.length,
-      itemBuilder: (context, index) {
-        final letter = state.availableLetters[index];
-        final apps = state.groupedApps[letter]!;
 
-        return Column(
-          key: _sectionKeys[letter],
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Section header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Text(
-                letter,
-                style: GoogleFonts.getFont(
-                  AppTextStyleNotifier.instance.fontFamily,
-                  color: AppTextStyleNotifier.instance.textColor.withValues(
-                    alpha: .7,
-                  ),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-            // Apps in this section
-            ...apps.map((appModel) {
-              final app = appModel.app;
-              return ValueListenableBuilder(
-                valueListenable: AppTextStyleNotifier.instance,
-                builder: (context, _, __) {
-                  return ValueListenableBuilder(
-                    valueListenable: AppFontSizeNotifier.instance,
-                    builder: (context, ___, ____) {
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                        ),
-                        leading: AppIconWidget(
-                          iconData: app.icon,
-                          size: 40,
-                          appName: app.name,
-                        ),
-                        title: Text(
-                          app.name,
-                          style: GoogleFonts.getFont(
-                            AppTextStyleNotifier.instance.fontFamily,
-                            textStyle: TextStyle(
-                              color: AppTextStyleNotifier.instance.textColor,
-                              fontWeight:
-                                  AppTextStyleNotifier.instance.fontWeight,
-                              fontSize: AppFontSizeNotifier.instance.value,
-                            ),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                        ),
-                        onTap: () {
-                          context.read<RootBloc>().add(
-                            LaunchAppEvent(packageName: app.packageName),
-                          );
-                        },
-                      );
-                    },
-                  );
-                },
-              );
-            }),
-            ConstantWidgets.hight20(context),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildFilteredAppsList(AllAppsState state) {
-    return ListView.builder(
-      itemCount: state.filteredApps.length,
-      itemBuilder: (context, index) {
-        final app = state.filteredApps[index].app;
-        return ValueListenableBuilder(
-          valueListenable: AppTextStyleNotifier.instance,
-          builder: (context, _, __) {
-            return ValueListenableBuilder(
-              valueListenable: AppFontSizeNotifier.instance,
-              builder: (context, ___, ____) {
-                return ListTile(
-                  title: Row(
-                    children: [
-                      AppIconWidget(
-                        iconData: app.icon,
-                        size: 40,
-                        appName: app.name,
-                      ),
-                      ConstantWidgets.width20(context),
-                      Expanded(
-                        child: Text(
-                          app.name,
-                          style: GoogleFonts.getFont(
-                            AppTextStyleNotifier.instance.fontFamily,
-                            textStyle: TextStyle(
-                              color: AppTextStyleNotifier.instance.textColor,
-                              fontWeight:
-                                  AppTextStyleNotifier.instance.fontWeight,
-                              fontSize: AppFontSizeNotifier.instance.value,
-                            ),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    context.read<RootBloc>().add(
-                      LaunchAppEvent(packageName: app.packageName),
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
 
   Widget _buildAlphabetIndex(AllAppsState state) {
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;

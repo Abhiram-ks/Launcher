@@ -7,9 +7,12 @@ import 'package:minilauncher/features/view/screens/settings_screen/settings_scre
 import 'package:minilauncher/features/view/widget/app_icon_widget.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
+import 'package:minilauncher/core/service/app_customization_helper.dart';
+import 'package:minilauncher/features/model/data/app_customization_prefs.dart';
 import 'package:minilauncher/features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
 import 'package:minilauncher/features/view_model/cubit/prioritized_scroll_cubit.dart';
 import 'package:minilauncher/features/view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
+import 'package:minilauncher/features/view_model/cubit/layout_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ShowPrioritizedMainApps extends StatefulWidget {
@@ -63,9 +66,9 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return GestureDetector(
+
       onLongPress: () {
         Navigator.push(
           context,
@@ -75,7 +78,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date and Time Header
+            ConstantWidgets.hight50(context),
           GestureDetector(
             onLongPress: () {
               Navigator.push(
@@ -84,7 +87,7 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
               );
             },
             child: Padding(
-              padding: const EdgeInsets.only(top: 10, left: 20),
+              padding: const EdgeInsets.only(top: 5, left: 20),
               child: StreamBuilder<DateTime>(
                 stream: Stream.periodic(
                   const Duration(seconds: 1),
@@ -147,57 +150,87 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
 
           // Apps List
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              itemCount: state.prioritizedApps.length + 1,
-              itemBuilder: (context, index) {
-                if (index < state.prioritizedApps.length) {
-                  final app = state.prioritizedApps[index].app;
-                  return ValueListenableBuilder(
-                    valueListenable: AppTextStyleNotifier.instance,
-                    builder: (context, _, __) {
-                      return ValueListenableBuilder(
-                        valueListenable: AppFontSizeNotifier.instance,
-                        builder: (context, ___, ____) {
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
+            child: BlocBuilder<LayoutCubit, LayoutState>(
+              builder: (context, layoutState) {
+                // Show priority apps in grid if toggle is ON, otherwise show in list
+                if (layoutState.showPriorityInGrid) {
+                  return _buildGridView(state, layoutState.gridColumnCount);
+                } else {
+                  return _buildListView(state);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListView(LoadPrioritizedAppsState state) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      itemCount: state.prioritizedApps.length + 1,
+      itemBuilder: (context, index) {
+        if (index < state.prioritizedApps.length) {
+          final app = state.prioritizedApps[index].app;
+          return ValueListenableBuilder(
+            valueListenable: AppTextStyleNotifier.instance,
+            builder: (context, _, __) {
+              return ValueListenableBuilder(
+                valueListenable: AppFontSizeNotifier.instance,
+                builder: (context, ___, ____) {
+                  return StreamBuilder<Map<String, dynamic>?>(
+                    stream: AppCustomizationPrefs.instance.watchCustomization(app.packageName),
+                    builder: (context, customizationSnapshot) {
+                      final displayName = AppCustomizationHelper.getCustomizedAppName(
+                        app.packageName,
+                        app.name,
+                      );
+                      final customIconPath = AppCustomizationHelper.getCustomizedAppIconPath(
+                        app.packageName,
+                      );
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                        ),
+                        leading: AppIconWidget(
+                          iconData: app.icon,
+                          iconPath: customIconPath,
+                          size: 40,
+                          appName: displayName,
+                        ),
+                        title: Text(
+                          displayName,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value,
                             ),
-                            leading: AppIconWidget(
-                              iconData: app.icon,
-                              size: 40,
-                              appName: app.name,
-                            ),
-                            title: Text(
-                              app.name,
-                              style: GoogleFonts.getFont(
-                                AppTextStyleNotifier.instance.fontFamily,
-                                textStyle: TextStyle(
-                                  color:
-                                      AppTextStyleNotifier.instance.textColor,
-                                  fontWeight:
-                                      AppTextStyleNotifier.instance.fontWeight,
-                                  fontSize: AppFontSizeNotifier.instance.value,
-                                ),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              softWrap: true,
-                            ),
-                            onTap: () {
-                              context.read<RootBloc>().add(
-                                LaunchAppEvent(packageName: app.packageName),
-                              );
-                            },
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
+                        ),
+                        onTap: () {
+                          context.read<RootBloc>().add(
+                            LaunchAppEvent(packageName: app.packageName),
                           );
                         },
                       );
                     },
                   );
-                }
+                },
+              );
+            },
+          );
+        }
                 // Bottom trigger area
                 else {
                   return BlocConsumer<RootBloc, RootState>(
@@ -348,12 +381,233 @@ class _ShowPrioritizedMainAppsState extends State<ShowPrioritizedMainApps> {
                       );
                     },
                   );
+        }
+      },
+    );
+  }
+
+  Widget _buildGridView(LoadPrioritizedAppsState state, int columnCount) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columnCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index < state.prioritizedApps.length) {
+                  final app = state.prioritizedApps[index].app;
+                  return _buildGridAppItem(app);
                 }
+                return null;
               },
+              childCount: state.prioritizedApps.length,
             ),
           ),
-        ],
-      ),
+        ),
+        // Bottom trigger area
+        SliverToBoxAdapter(
+          child: BlocConsumer<RootBloc, RootState>(
+            buildWhen: (previous, current) =>
+                (current is RootShowPrioritizedBuildState),
+            listenWhen: (previous, current) =>
+                (current is RootShowPrioritizedBuildActionState),
+            listener: (BuildContext context, RootState state) async {
+              if (state is InitialAllAppsLoadedState &&
+                  !context.read<PrioritizedScrollCubit>().state.hasTriggered) {
+                context.read<PrioritizedScrollCubit>().markTriggered();
+
+                context.read<RootBloc>().add(
+                  ResetToShowPrioritizedEvent(),
+                );
+                await _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+
+                await Future.delayed(const Duration(milliseconds: 200));
+                if (!context.mounted) return;
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        BlocProvider(
+                      create: (context) => AllAppsCubit(state.allApps),
+                      child: AllAppsView(state: state),
+                    ),
+                    transitionsBuilder: (
+                      context,
+                      animation,
+                      secondaryAnimation,
+                      child,
+                    ) {
+                      return SlideTransition(
+                        position: animation.drive(
+                          Tween(
+                            begin: const Offset(0.0, 1.0),
+                            end: Offset.zero,
+                          ),
+                        ),
+                        child: child,
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 300),
+                  ),
+                ).then((_) => _resetState());
+              }
+            },
+            builder: (BuildContext context, RootState state) {
+              if (state is PreparedAllAppsLoadedState) {
+                return const SizedBox.shrink();
+              }
+              final scrollState = context.watch<PrioritizedScrollCubit>().state;
+              return SizedBox(
+                height: screenHeight * 0.6,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(),
+                    (state is PreparingAllAppsLoadingState)
+                        ? Column(
+                            children: [
+                              Transform.scale(
+                                scale: 0.3,
+                                child: const CircularProgressIndicator(
+                                  color: AppPalette.whiteColor,
+                                  backgroundColor: AppPalette.greyColor,
+                                  strokeWidth: 3,
+                                ),
+                              ),
+                              ConstantWidgets.hight20(context),
+                              const Text(
+                                'Loading all apps...',
+                                style: TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          )
+                        : AnimatedOpacity(
+                            opacity: (scrollState.hasTriggered ||
+                                    scrollState.isLoading)
+                                ? 0.3
+                                : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: Column(
+                              children: [
+                                TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0, end: 1),
+                                  duration: const Duration(seconds: 2),
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset(0, -10 * value),
+                                      child: Icon(
+                                        Icons.keyboard_arrow_up,
+                                        color: AppTextStyleNotifier
+                                            .instance.textColor,
+                                        size: 40,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                ConstantWidgets.hight20(context),
+                                Text(
+                                  'Scroll up to load all apps',
+                                  style: GoogleFonts.getFont(
+                                    AppTextStyleNotifier.instance.fontFamily,
+                                    textStyle: TextStyle(
+                                      color: AppTextStyleNotifier
+                                          .instance.textColor,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                    const Spacer(),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridAppItem(dynamic app) {
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: AppCustomizationPrefs.instance.watchCustomization(app.packageName),
+      builder: (context, customizationSnapshot) {
+        final displayName = AppCustomizationHelper.getCustomizedAppName(
+          app.packageName,
+          app.name ?? '',
+        );
+        final customIconPath = AppCustomizationHelper.getCustomizedAppIconPath(
+          app.packageName,
+        );
+
+        return ValueListenableBuilder(
+          valueListenable: AppTextStyleNotifier.instance,
+          builder: (context, _, __) {
+            return ValueListenableBuilder(
+              valueListenable: AppFontSizeNotifier.instance,
+              builder: (context, ___, ____) {
+                return InkWell(
+                  onTap: () {
+                    context.read<RootBloc>().add(
+                      LaunchAppEvent(packageName: app.packageName),
+                    );
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIconWidget(
+                        iconData: app.icon,
+                        iconPath: customIconPath,
+                        size: 42,
+                        appName: displayName,
+                      ),
+                      Flexible(
+                        child: Text(
+                          displayName,
+                          style: GoogleFonts.getFont(
+                            AppTextStyleNotifier.instance.fontFamily,
+                            textStyle: TextStyle(
+                              color: AppTextStyleNotifier.instance.textColor,
+                              fontWeight: AppTextStyleNotifier.instance.fontWeight,
+                              fontSize: AppFontSizeNotifier.instance.value * 0.75,
+                            ),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
