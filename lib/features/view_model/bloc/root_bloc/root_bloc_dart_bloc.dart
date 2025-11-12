@@ -8,7 +8,6 @@ import 'package:minilauncher/core/service/launcher_service.dart';
 import 'package:minilauncher/core/service/app_events_service.dart';
 import 'package:minilauncher/features/model/data/appvalues.dart';
 import 'package:minilauncher/features/model/data/priority_apps_localdb.dart';
-import 'package:minilauncher/features/model/data/wallpapper_prefs_localdb.dart';
 
 import '../../../model/models/app_model.dart';
 

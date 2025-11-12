@@ -1,14 +1,14 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/constant/app_layout_type.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_management_service.dart';
-import 'package:minilauncher/features/view/screens/settings_screen/intivitual_app_handle_Screen.dart';
+import 'package:minilauncher/core/widgets/app_search_field.dart';
+import 'package:minilauncher/core/widgets/app_item_more_overlay.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/common/custom_appbar.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../view_model/cubit/layout_cubit.dart';
@@ -44,7 +44,6 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _needsRefresh) {
-      log('App resumed, refreshing app list');
       _needsRefresh = false;
       _reloadAppsAfterUninstall();
     }
@@ -71,16 +70,13 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
       _blocSubscription?.cancel();
     
       _blocSubscription = rootBloc.stream.listen((rootState) {
-        log('RootBloc state changed: ${rootState.runtimeType}');
         
         if (rootState is InitialAllAppsLoadedState && mounted) {
-          log('✅ Apps reloaded successfully: ${rootState.allApps.length} apps');
           _blocSubscription?.cancel();
           _blocSubscription = null;
         }
       });
       
-      log('Triggering LoadAppsEvent');
       rootBloc.add(LoadAppsEvent());
     });
   }
@@ -116,36 +112,10 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
           children: [
             Column(
               children: [
-                Padding(
-                      padding: const EdgeInsets.only(
-                        top: 10,
-                        left: 10,
-                        right: 10,
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: TextStyle(
-                          color: AppTextStyleNotifier.instance.textColor,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Search apps to manage...",
-                          hintStyle: GoogleFonts.getFont(
-                            AppTextStyleNotifier.instance.fontFamily,
-                            color: AppTextStyleNotifier.instance.textColor.withValues(alpha: 0.6),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white10,
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: AppTextStyleNotifier.instance.textColor,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                    ),
+                AppSearchField(
+                  controller: _searchController,
+                  hintText: "Search apps to manage...",
+                ),
 
                     Expanded(
                       child: BlocBuilder<LayoutCubit, LayoutState>(
@@ -170,28 +140,12 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
                                       scrollController: _scrollController,
                                       columnCount: layoutState.gridColumnCount,
                                       onAppTap: (app) {
-                                        // Don't launch - show management options
                                         _showManagementOptions(context, app);
                                       },
                                       onAppLongPress: (app) {
                                         _showManagementOptions(context, app);
                                       },
-                                      buildGridItemOverlay: (app) => Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: Icon(
-                                            Icons.more_horiz,
-                                            size: 12,
-                                            color: AppTextStyleNotifier.instance.textColor,
-                                          ),
-                                        ),
-                                      ),
+                                      buildGridItemOverlay: (app) => const AppItemMoreOverlay(),
                                     )
                                   : buildFilteredAppsGrid(
                                       state: state,
@@ -202,22 +156,7 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
                                       onAppLongPress: (app) {
                                         _showManagementOptions(context, app);
                                       },
-                                      buildGridItemOverlay: (app) => Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black54,
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: Icon(
-                                            Icons.more_horiz,
-                                            size: 12,
-                                            color: AppTextStyleNotifier.instance.textColor,
-                                          ),
-                                        ),
-                                      ),
+                                      buildGridItemOverlay: (app) => const AppItemMoreOverlay(),
                                     ));
                         },
                       ),

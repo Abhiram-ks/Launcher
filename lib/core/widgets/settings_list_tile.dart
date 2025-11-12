@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:minilauncher/core/service/app_font_size_notifier.dart';
@@ -54,4 +53,5 @@ class SettingsListTile extends StatelessWidget {
     );
   }
 }
+
 

@@ -10,7 +10,7 @@ import 'package:minilauncher/core/service/app_font_size_notifier.dart';
 import 'package:minilauncher/features/view_model/cubit/layout_cubit.dart';
 
 import '../../../../core/themes/app_colors.dart';
-import '../../widget/settings_widget/settings_list_tile.dart';
+import 'package:minilauncher/core/widgets/settings_list_tile.dart';
 import 'select_text_style_screen.dart';
 
 class LayoutSettingsScreen extends StatelessWidget {

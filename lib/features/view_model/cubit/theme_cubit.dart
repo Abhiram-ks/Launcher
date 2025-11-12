@@ -1,11 +1,11 @@
-import 'package:equatable/equatable.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/constant/storage_keys.dart';
 import 'package:minilauncher/core/service/hive_storage.dart';
 
 enum AppThemeMode { dark, light }
 
-class ThemeState extends Equatable {
+class ThemeState  {
   final AppThemeMode themeMode;
   final bool isLoading;
 
@@ -32,9 +32,6 @@ class ThemeState extends Equatable {
   }
 
   bool get isDarkMode => themeMode == AppThemeMode.dark;
-
-  @override
-  List<Object?> get props => [themeMode, isLoading];
 }
 
 class ThemeCubit extends Cubit<ThemeState> {
