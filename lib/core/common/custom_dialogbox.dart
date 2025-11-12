@@ -25,21 +25,14 @@ class CustomCupertinoDialog {
                   style: TextStyle(color: firstButtonColor),
                 ),
                 onPressed: () {
-                  if (Navigator.canPop(context)) {
-                      Navigator.of(context).pop();
-                  }
-                  onTap(); 
+                  Navigator.of(context).pop();
+                  onTap();
                 },
               ),
               CupertinoDialogAction(
                 isDestructiveAction: true,
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  secondButtonText,
-                  style: TextStyle(),
-                ),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(secondButtonText),
               ),
             ],
           ),

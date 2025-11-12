@@ -8,6 +8,4 @@ export 'widgets/priority_app_header.dart';
 export 'widgets/priority_app_item.dart';
 export 'widgets/priority_save_button.dart';
 
-// Mixins
-export 'mixins/double_tap_handler_mixin.dart';
 

@@ -1,7 +1,6 @@
-
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:minilauncher/core/service/app_font_size_notifier.dart';
+import 'package:minilauncher/core/utils/app_text_widget.dart';
+import 'package:minilauncher/core/utils/text_style_helper.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 
 class SettingsListTile extends StatelessWidget {
@@ -20,32 +19,17 @@ class SettingsListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        AppTextStyleNotifier.instance,
-        AppFontSizeNotifier.instance,
-      ]),
+    return AppTextStyleBuilder(
       builder: (context, _) {
-        final textStyle = GoogleFonts.getFont(
-          AppTextStyleNotifier.instance.fontFamily,
-          textStyle: TextStyle(
-            color: AppTextStyleNotifier.instance.textColor,
-            fontWeight: AppTextStyleNotifier.instance.fontWeight,
-            fontSize: AppFontSizeNotifier.instance.value,
-          ),
-        );
-
         return ListTile(
           leading: Icon(
             icon,
-            color:  AppTextStyleNotifier.instance.textColor,
+            color: AppTextStyleNotifier.instance.textColor,
           ),
-          title: Text(
+          title: AppText(
             title,
-            style: textStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            softWrap: false,
           ),
           trailing: trailing,
           onTap: onTap,

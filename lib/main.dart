@@ -13,7 +13,6 @@ import 'core/themes/app_themes.dart';
 import 'features/model/data/app_icon_shape_prefs.dart';
 import 'features/view/screens/root_screen/root_screen.dart';
 import 'features/view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
-import 'features/view_model/cubit/double_tap_cubit.dart';
 import 'features/view_model/cubit/layout_cubit.dart';
 import 'features/view_model/cubit/theme_cubit.dart';
 
@@ -47,14 +46,13 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => RootBloc()..add(RootInitialEvent())),
-        BlocProvider(create: (_) => DoubleTapCubit()),
         BlocProvider(create: (_) => LayoutCubit()),
         BlocProvider(create: (_) => ThemeCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, themeState) {
           return MaterialApp(
-            title: 'Mini Launcher',
+            title: 'Minla: Minimalist launcher',
             theme: themeState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
             debugShowCheckedModeBanner: false,
             home: const RootScreen(),

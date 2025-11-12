@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:minilauncher/core/service/app_font_size_notifier.dart';
+import 'package:minilauncher/core/utils/app_text_widget.dart';
+import 'package:minilauncher/core/utils/text_style_helper.dart';
 import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -11,6 +11,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool? isTitle;
   final Color? titleColor;
   final List<Widget>? actions;
+  
   const CustomAppBar({
     super.key,
     this.title,
@@ -22,29 +23,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        AppTextStyleNotifier.instance,
-        AppFontSizeNotifier.instance,
-      ]),
+    return AppTextStyleBuilder(
       builder: (context, _) {
         return AppBar(
           centerTitle: true,
-          title: isTitle == true
-              ? Text(
+          title: isTitle == true && title != null
+              ? AppText(
                   title!,
-                  style: GoogleFonts.getFont(
-                    AppTextStyleNotifier.instance.fontFamily,
-                    textStyle: TextStyle(
-                      color: AppTextStyleNotifier.instance.textColor,
-                      fontWeight: AppTextStyleNotifier.instance.fontWeight,
-                      fontSize: AppFontSizeNotifier.instance.value,
-                    ),
-                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  softWrap: false,
                 )
               : null,
           iconTheme: IconThemeData(color: AppTextStyleNotifier.instance.textColor),

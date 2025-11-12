@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:minilauncher/core/common/custom_launcher.dart';
 import 'package:minilauncher/core/service/launcher_service.dart';
-import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/features/model/data/appvalues.dart';
 import 'package:minilauncher/features/model/models/app_model.dart';
 import 'package:minilauncher/features/view/screens/select_wallpaper/select_wallpaper_screen.dart';
@@ -11,7 +10,6 @@ import 'package:minilauncher/features/view/screens/settings_screen/select_shape_
 import 'package:minilauncher/features/view/screens/settings_screen/select_text_style_screen.dart';
 import '../../../view_model/bloc/image_switch_cubit/image_switch_cubit.dart';
 import '../../../view_model/bloc/root_bloc/root_bloc_dart_bloc.dart';
-import '../../../view_model/cubit/double_tap_cubit.dart';
 import '../../../view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
 import '../../screens/settings_screen/app_management_screen.dart';
 import '../../screens/settings_screen/layout_settings_screen.dart';
@@ -129,24 +127,6 @@ Widget bodyPartOfSettings({required BuildContext context}) {
           );
         },
       ),
-      BlocBuilder<DoubleTapCubit, bool>(
-        builder: (context, isEnabled) {
-          return SettingsListTile(
-            title: 'Double tap turn ${isEnabled ? 'off' : 'on'} screen',
-            icon: CupertinoIcons.power,
-            trailing: Transform.scale(
-              scale: 0.6,
-              child: CupertinoSwitch(
-                value: isEnabled,
-                activeTrackColor: AppTextStyleNotifier.instance.textColor,
-                onChanged: (_) {
-                  context.read<DoubleTapCubit>().toggle();
-                },
-              ),
-            ),
-          );
-        },
-      ),
       SettingsListTile(
         title: 'Send Feedback',
         icon: CupertinoIcons.bubble_left_bubble_right,
@@ -165,14 +145,14 @@ Widget bodyPartOfSettings({required BuildContext context}) {
         title: 'Terms and Conditions',
         icon: CupertinoIcons.doc_text,
         onTap: () {
-          openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/e0053561-a7ca-4001-b169-331ba91ee86e', errorMessage: 'Terms and Conditions cannot be opened at the moment due to an error.',);
+          openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/344298d1-4988-42ba-be2a-4366381f0a52', errorMessage: 'Terms and Conditions cannot be opened at the moment due to an error.',);
         },
       ),
       SettingsListTile(
         title: 'Privacy Policy',
         icon: CupertinoIcons.checkmark_shield,
         onTap: () {
-          openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/2e7d9a61-0733-4688-b5a5-458ce10be82f', errorMessage: 'Privacy Policy cannot be opened at the moment due to an error.',);
+          openWebPage(context: context, url: 'https://www.freeprivacypolicy.com/live/c50bd7a2-e395-49c4-a028-99ea25d24fec', errorMessage: 'Privacy Policy cannot be opened at the moment due to an error.',);
         },
       ),
     ],

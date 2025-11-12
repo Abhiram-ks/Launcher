@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:minilauncher/core/common/custom_appbar.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';

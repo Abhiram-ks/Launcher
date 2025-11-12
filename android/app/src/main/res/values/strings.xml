@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mini Launcher</string>
-    <string name="lock_service_desc">Mini Launcher Accessibility Lock Service</string>
-    <string name="device_admin_desc">Allows Mini Launcher to lock the screen</string>
-    <string name="device_admin_label">Mini Launcher Device Admin</string>
 </resources>
 
 

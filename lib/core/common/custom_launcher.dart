@@ -24,8 +24,8 @@ Future<void> openWebPage({
 Future<void> sendFeedback(BuildContext context) async {
   final Uri emailLaunchUri = Uri(
     scheme: 'mailto',
-    path: 'Growblic@gmail.com',
-    query: 'subject=Feedback for PivotOS: Minimalist launcher App&body=Hi Team,%0A%0AI would like to share the following feedback:%0A%0A',
+    path: 'abhiramks0001@gmail.com',
+    query: 'subject=Feedback for Minla: Minimalist launcher App&body=Hi Abhiram ,%0A%0AI would like to share the following feedback:%0A%0A',
   );
   try {
     await launchUrl(emailLaunchUri);

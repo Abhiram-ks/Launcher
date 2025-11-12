@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.boeko.minilauncher"
+    namespace = "com.abhiram.minla"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.boeko.minilauncher"
+        applicationId = "com.abhiram.minla"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = 18

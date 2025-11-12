@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:minilauncher/core/themes/app_colors.dart';
 
@@ -9,7 +8,7 @@ class CustomSnackBar {
     Color textColor = AppPalette.whiteColor,
     Color backgroundColor = Colors.black87,
     int durationSeconds = 2,
-     TextAlign textAlign = TextAlign.left,
+    TextAlign textAlign = TextAlign.left,
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
