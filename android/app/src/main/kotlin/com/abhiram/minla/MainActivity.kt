@@ -65,14 +65,18 @@ class MainActivity : FlutterActivity() {
             val packageName = call.argument<String>("packageName")
             when (call.method) {
                 "uninstallApp" -> {
-                    if (packageName != null) {
+                    if (packageName != null && packageName.isNotEmpty()) {
+                        android.util.Log.d("MainActivity", "Uninstall requested for package: $packageName")
                         try {
                             uninstallApp(packageName)
+                            android.util.Log.d("MainActivity", "Uninstall intent started successfully")
                             result.success(true)
                         } catch (e: Exception) {
-                            result.error("UNINSTALL_FAILED", e.message, null)
+                            android.util.Log.e("MainActivity", "Uninstall failed: ${e.message}", e)
+                            result.error("UNINSTALL_FAILED", e.message ?: "Unknown error", null)
                         }
                     } else {
+                        android.util.Log.e("MainActivity", "Invalid package name: $packageName")
                         result.error("INVALID_ARGUMENT", "Package name is required", null)
                     }
                 }
@@ -108,10 +112,51 @@ class MainActivity : FlutterActivity() {
 
 
     private fun uninstallApp(packageName: String) {
-        val intent = Intent(Intent.ACTION_DELETE)
-        intent.data = android.net.Uri.parse("package:$packageName")
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+        android.util.Log.d("MainActivity", "uninstallApp called for: $packageName")
+        
+        try {
+            // Check if package exists
+            try {
+                packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+                android.util.Log.d("MainActivity", "Package exists: $packageName")
+            } catch (e: PackageManager.NameNotFoundException) {
+                android.util.Log.e("MainActivity", "Package not found: $packageName")
+                throw Exception("Package not found: $packageName")
+            }
+
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = android.net.Uri.parse("package:$packageName")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+                // Ensure it appears above launcher
+                addCategory(Intent.CATEGORY_DEFAULT)
+            }
+
+            android.util.Log.d("MainActivity", "Created uninstall intent for: $packageName")
+
+            // Verify intent can be handled
+            val resolveInfo = intent.resolveActivity(packageManager)
+            if (resolveInfo != null) {
+                android.util.Log.d("MainActivity", "Intent can be resolved, starting activity")
+                try {
+                    startActivity(intent)
+                    android.util.Log.d("MainActivity", "Uninstall activity started successfully")
+                } catch (e: android.content.ActivityNotFoundException) {
+                    android.util.Log.e("MainActivity", "Activity not found: ${e.message}")
+                    throw Exception("Cannot open uninstall dialog. Activity not found.")
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to start activity: ${e.message}", e)
+                    throw Exception("Failed to start uninstall activity: ${e.message}")
+                }
+            } else {
+                android.util.Log.e("MainActivity", "No activity found to handle uninstall intent")
+                throw Exception("No activity found to handle uninstall intent. Please check if package manager is available.")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to uninstall app: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun openAppInfo(packageName: String) {

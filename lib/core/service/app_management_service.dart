@@ -19,8 +19,10 @@ class AppManagementService {
         'packageName': packageName,
       });
       return result;
-    } on PlatformException catch (_) {
-      return false;
+    } on PlatformException catch (e) {
+      throw Exception(e.message ?? 'Failed to uninstall app');
+    } catch (e) {
+      rethrow;
     }
   }
 

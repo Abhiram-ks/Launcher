@@ -10,6 +10,7 @@ import 'package:minilauncher/core/service/app_text_style_notifier.dart';
 import 'package:minilauncher/core/service/app_management_service.dart';
 import 'package:minilauncher/features/view/screens/settings_screen/intivitual_app_handle_Screen.dart';
 import '../../../../core/common/custom_appbar.dart';
+import '../../../../core/common/custom_snackbar.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../view_model/cubit/layout_cubit.dart';
 import '../../../view_model/cubit/all_apps_cubit/all_apps_cubit.dart';
@@ -32,6 +33,8 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
   final ScrollController _scrollController = ScrollController();
   Map<String, GlobalKey> _sectionKeys = {};
   bool _needsRefresh = false;
+  bool _isRefreshing = false;
+  DateTime? _lastRefreshTime;
   StreamSubscription<RootState>? _blocSubscription;
 
   @override
@@ -43,10 +46,14 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _needsRefresh) {
-      log('App resumed, refreshing app list');
-      _needsRefresh = false;
-      _reloadAppsAfterUninstall();
+    if (state == AppLifecycleState.resumed && _needsRefresh && !_isRefreshing) {
+      // Debounce: prevent multiple refreshes within 1 second
+      final now = DateTime.now();
+      if (_lastRefreshTime == null || now.difference(_lastRefreshTime!) > const Duration(seconds: 1)) {
+        _needsRefresh = false;
+        _lastRefreshTime = now;
+        _reloadAppsAfterUninstall();
+      }
     }
   }
 
@@ -60,10 +67,14 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
   }
 
   void _reloadAppsAfterUninstall() {
-    if (!mounted) return;
+    if (!mounted || _isRefreshing) return;
+    _isRefreshing = true;
 
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (!mounted) return;
+      if (!mounted) {
+        _isRefreshing = false;
+        return;
+      }
       AppValues.allApps = [];
       
       final rootBloc = context.read<RootBloc>();
@@ -71,12 +82,11 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
       _blocSubscription?.cancel();
     
       _blocSubscription = rootBloc.stream.listen((rootState) {
-        log('RootBloc state changed: ${rootState.runtimeType}');
         
         if (rootState is InitialAllAppsLoadedState && mounted) {
-          log('✅ Apps reloaded successfully: ${rootState.allApps.length} apps');
           _blocSubscription?.cancel();
           _blocSubscription = null;
+          _isRefreshing = false;
         }
       });
       
@@ -293,30 +303,6 @@ class _AppManagementViewState extends State<AppManagementView> with WidgetsBindi
                     AppTextStyleNotifier.instance.fontFamily,
                     textStyle:  TextStyle(
                         color: AppTextStyleNotifier.instance.textColor,
-                        fontSize: 14,
-                    ),
-                  ),
-                  textAlign: TextAlign.center,  
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Set flag to refresh when app resumes
-              _needsRefresh = true;
-              // Trigger Android's uninstall dialog
-              await AppManagementService.uninstallApp(app.packageName);
-            },
-            isDestructiveAction: true,
-            child:  Text(
-                    'Uninstall',
-                  style: GoogleFonts.getFont(
-                    AppTextStyleNotifier.instance.fontFamily,
-                    textStyle:  TextStyle(
-                        color: AppPalette.redColor,
                         fontSize: 14,
                     ),
                   ),

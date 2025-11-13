@@ -31,7 +31,7 @@ android {
         applicationId = "com.abhiram.minla"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 18
+        versionCode = 2
         versionName = "1.0.0"
 
         
